@@ -1,3 +1,13 @@
+# Gradle and build
+.gradle
+/build/
+
+# Intellij IDEA
+.idea
+
+# Generated files
+/gen/
+
 # Compiled class file
 *.class
 
