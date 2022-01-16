@@ -1,0 +1,9 @@
+scilla_version 0
+
+library X
+
+let x = Int64 10
+let b = builtin isqrt x
+let c = builtin isqrt x
+
+contract Y()

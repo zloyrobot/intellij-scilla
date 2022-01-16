@@ -1,0 +1,7 @@
+scilla_version 0
+
+library X
+
+let x = fun (A: Int32) -> fun ('B: Int32) -> "Hello"
+
+contract Y()

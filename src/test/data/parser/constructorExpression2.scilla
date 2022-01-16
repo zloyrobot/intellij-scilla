@@ -1,0 +1,11 @@
+
+scilla_version 0
+
+library X
+
+let one_msg = 
+  fun (msg : Message) => 
+    let nil_msg = Nil {Message} in
+    Cons {Message} msg nil_msg
+
+contract Y()

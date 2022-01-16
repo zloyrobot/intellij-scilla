@@ -1,0 +1,8 @@
+scilla_version 0
+
+library X
+
+let a = let y = Int32 0 in let z = Int32 1 in "Hello"
+let b = a
+
+contract Y()

@@ -1,0 +1,6 @@
+(**************************************)
+(* * (* The contract definition *)  * 
+(**************************************)
+
+scilla_version 0
+contract HelloWorld(owner: Address)

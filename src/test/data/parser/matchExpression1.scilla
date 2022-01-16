@@ -1,0 +1,13 @@
+
+scilla_version 0
+
+library X
+
+let a = True
+let b = match a with
+         | True => "Hello"
+         | (False) => "World"
+        end
+
+contract Y()
+

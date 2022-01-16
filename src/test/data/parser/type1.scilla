@@ -1,0 +1,7 @@
+scilla_version 0
+
+library X
+
+let x : Uint128 = Uint128 0
+
+contract Y()

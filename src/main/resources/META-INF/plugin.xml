@@ -1,0 +1,19 @@
+<idea-plugin>
+    <id>zloyrobot.scilla</id>
+    <name>Scilla</name>
+    <vendor email="zloyrobot@gmail.com" url="https://github.com/scilla">zloyrobot</vendor>
+
+    <description><![CDATA[
+      Scilla language support for IntelliJ IDEA.
+    ]]></description>
+
+    <idea-version since-build="202.0.0"/>
+    <depends>com.intellij.modules.lang</depends>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <fileType name="Scilla" language="Scilla" implementationClass="com.zloyrobot.scilla.lang.ScillaFileType" extensions="scilla" fieldName="INSTANCE"/>
+        <lang.parserDefinition language="Scilla" implementationClass="com.zloyrobot.scilla.lang.ScillaParserDefinition"/>
+        <lang.syntaxHighlighterFactory language="Scilla" implementationClass="com.zloyrobot.scilla.ide.ScillaSyntaxHighlighterFactory"/>
+    </extensions>
+
+</idea-plugin>

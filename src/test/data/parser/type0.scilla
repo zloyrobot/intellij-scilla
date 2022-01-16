@@ -1,0 +1,6 @@
+scilla_version 0
+
+library X
+let foo = tfun 'A => fun (x : 'A -> 'A) => fun (y : 'A) => x y
+
+contract Y()

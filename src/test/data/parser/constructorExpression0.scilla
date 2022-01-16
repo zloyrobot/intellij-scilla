@@ -1,0 +1,17 @@
+scilla_version 0
+
+library X
+
+type Piece =
+| King
+| GoldGeneral
+| SilverGeneral
+| Knight
+| Lance
+| Pawn
+| Rook
+| Bishop
+
+let x = King
+
+contract Y()

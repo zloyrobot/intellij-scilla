@@ -1,0 +1,6 @@
+scilla_version 0
+
+library X
+let a = Int32 42
+
+contract Y()

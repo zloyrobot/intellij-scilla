@@ -1,0 +1,8 @@
+scilla_version 0
+
+library X
+
+let x = Int32 0
+let b = builtin eq x x
+
+contract Y()

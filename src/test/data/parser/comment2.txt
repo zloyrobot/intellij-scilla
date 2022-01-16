@@ -1,0 +1,11 @@
+FILE
+  PsiComment(ScillaTokenType.COMMENT)('(**************************************)')
+  PsiWhiteSpace('\n')
+  PsiComment(ScillaTokenType.COMMENT)('(* * (* The contract definition *)  * \n(**************************************)\n\nscilla_version 0\ncontract HelloWorld(owner: Address')
+  ScillaVersion(ScillaElementType.SCILLA_VERSION)
+    PsiErrorElement:Expected 'scilla_version'
+      <empty list>
+  ScillaContractDefinition(ScillaElementType.CONTRACT_DEFINITION)
+    <empty list>
+  ScillaGarbageAtTheEndOfFile(ScillaElementType.GARBAGE_AT_THE_END_OF_FILE)
+    PsiElement(ScillaTokenType.RPAREN)(')')

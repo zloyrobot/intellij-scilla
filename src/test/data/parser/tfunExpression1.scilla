@@ -1,0 +1,7 @@
+scilla_version 0
+
+library X
+
+let x = tfun 'a => fun (b: Int32) => tfun 'c => "Hello"   (*parse also non-capitalized type parameters*)
+
+contract Y()

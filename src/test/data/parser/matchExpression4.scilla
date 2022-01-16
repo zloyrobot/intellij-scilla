@@ -1,0 +1,22 @@
+scilla_version 0
+
+library X
+
+type Square = 
+  | Square of Int32 Int32
+
+type Square2 = 
+  | Square2 of Square Square
+
+let zero = Int32 0
+let s1 = Square zero zero
+let s2 = Square2 s1 s1
+
+let a = True
+let b = match s2 with
+         | Square2 (Square a b) _  => "Hello"
+         | _ => "World"
+        end
+
+
+contract Y()

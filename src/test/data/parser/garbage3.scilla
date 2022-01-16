@@ -1,0 +1,6 @@
+scilla_version 0
+
+library x
+let a = "hello"
+let B = 0x11
+

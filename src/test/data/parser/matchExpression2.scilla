@@ -1,0 +1,17 @@
+scilla_version 0
+
+library X
+
+type Square = 
+  | Square of Int32 Int32
+
+let zero = Int32 0
+let x = Square zero zero
+
+let a = True
+let b = match x with
+         | Square a b => "Hello"
+        end
+
+
+contract Y()

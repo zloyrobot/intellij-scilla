@@ -1,0 +1,10 @@
+scilla_version 0
+
+import X as Y
+
+library NS
+
+
+contract HelloWorld
+(owner: Address)
+

@@ -1,0 +1,6 @@
+scilla_version 0
+
+library X
+let a = {_tag : ""; _recipient : owner; _amount : bal; code : got_funds_code};
+
+contract Y()

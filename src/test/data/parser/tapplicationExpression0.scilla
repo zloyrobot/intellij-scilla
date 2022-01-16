@@ -1,0 +1,11 @@
+scilla_version 0
+
+library X
+
+let a = "Hello"
+let tft = tfun 'A => fun (b: String) => tfun 'C => "Hello"
+let ft = @tft Int32
+let t = ft a
+let x = @t Int32 
+
+contract Y()

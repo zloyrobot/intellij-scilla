@@ -1,0 +1,8 @@
+scilla_version 0
+
+library X
+
+let a = "hello"
+let b = 0x123456789012345678901234567890123456789012345678901234567890abff
+
+contract Y()

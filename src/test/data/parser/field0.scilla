@@ -1,0 +1,4 @@
+scilla_version 0
+contract HelloWorld()
+
+field field1 : Int32 = Int32 0 
