@@ -1,0 +1,26 @@
+scilla_version 0
+
+import ExternalLib
+
+(* Comment *)
+library SampleLibrary
+
+type SampleType = | Constr1 | Constr2 of Bool | Constr3 of Bool -> Bool
+
+
+let one_msg =
+	fun (msg: Message) =>
+	let nil_msg = Nil {Message} in
+	Cons {Message} msg nil_msg
+
+
+contract SampleContract()
+
+field contract_address: ByStr20 = 0x0123456789012345678901234567890123456789
+field contract_flag: Bool = True
+
+transition SampleTransition(name: String, address: ByStr20, status: Uint32)
+	msg = { _tag: "Tag"; receiver: address; status: long_status };
+	msgs = one_msg msg;
+	send msgs
+end

@@ -14,6 +14,12 @@
         <fileType name="Scilla" language="Scilla" implementationClass="com.zloyrobot.scilla.lang.ScillaFileType" extensions="scilla" fieldName="INSTANCE"/>
         <lang.parserDefinition language="Scilla" implementationClass="com.zloyrobot.scilla.lang.ScillaParserDefinition"/>
         <lang.syntaxHighlighterFactory language="Scilla" implementationClass="com.zloyrobot.scilla.ide.ScillaSyntaxHighlighterFactory"/>
+		<lang.foldingBuilder language="Scilla" implementationClass="com.zloyrobot.scilla.ide.ScillaFoldingBuilder"/>
+		<lang.psiStructureViewFactory language="Scilla" implementationClass="com.zloyrobot.scilla.ide.ScillaStructureViewBuilderFactory"/>
+		<lang.formatter language="Scilla" implementationClass="com.zloyrobot.scilla.ide.ScillaFormattingModelBuilder"/>
+		<codeStyleSettingsProvider implementation="com.zloyrobot.scilla.ide.ScillaCodeStyleSettingsProvider"/>
+		<langCodeStyleSettingsProvider implementation="com.zloyrobot.scilla.ide.ScillaLanguageCodeStyleSettingsProvider"/>
+		<braceMatcher filetype="Scilla" implementationClass="com.zloyrobot.scilla.ide.ScillaBraceMatcher"/>
     </extensions>
 
 </idea-plugin>
