@@ -4,6 +4,7 @@ import com.intellij.lang.ASTNode
 import com.intellij.psi.PsiElement
 import com.intellij.psi.tree.IElementType
 import com.intellij.psi.tree.IFileElementType
+import com.intellij.psi.tree.TokenSet
 import org.jetbrains.annotations.NonNls
 
 class ScillaElementType(@NonNls debugName: String) : IElementType(debugName, ScillaLanguage) {
@@ -17,6 +18,8 @@ class ScillaElementType(@NonNls debugName: String) : IElementType(debugName, Sci
         val SIMPLE_REF = ScillaElementType("SIMPLE_REF")
         val QUALIFIED_REF = ScillaElementType("QUALIFIED_REF")
         val HEX_QUALIFIED_REF = ScillaElementType("HEX_QUALIFIED_REF")
+		
+		val REFS = TokenSet.create(SIMPLE_REF, QUALIFIED_REF, HEX_QUALIFIED_REF)
 
         val MAP_KEY = ScillaElementType("MAP_KEY")
         val MAP_VALUE = ScillaElementType("MAP_VALUE")
@@ -31,7 +34,18 @@ class ScillaElementType(@NonNls debugName: String) : IElementType(debugName, Sci
         val ADDRESS_TYPE_FIELD = ScillaElementType("ADDRESS_TYPE_FIELD")
         val TYPE_VAR_TYPE = ScillaElementType("TYPE_VAR_TYPE")
         val PAREN_TYPE = ScillaElementType("PAREN_TYPE")
+		
+		val TYPES = TokenSet.create(REF_TYPE, MAP_TYPE, FUN_TYPE, POLY_TYPE, ADDRESS_TYPE, TYPE_VAR_TYPE, PAREN_TYPE)
 
+		val CONTRACT_PARAMETERS = ScillaElementType("CONTRACT_PARAMETER_LIST")
+		val COMPONENT_PARAMETERS = ScillaElementType("COMPONENT_PARAMETERS")
+		val CONTRACT_REF_PARAMETERS = ScillaElementType("CONTRACT_REF_PARAMETER_LIST")
+		val FUNCTION_PARAMETERS = ScillaElementType("FUNCTION_PARAMETER_LIST")
+
+		val CONTRACT_OR_COMPONENT_PARAMETERS = TokenSet.create(CONTRACT_PARAMETERS, COMPONENT_PARAMETERS)
+		val PARAMETERS = TokenSet.create(CONTRACT_PARAMETERS, COMPONENT_PARAMETERS, CONTRACT_REF_PARAMETERS,
+			FUNCTION_PARAMETERS)
+		
         val WILDCARD_PATTERN = ScillaElementType("LITERAL_EXPRESSION")
         val BINDER_PATTERN = ScillaElementType("LITERAL_EXPRESSION")
         val CONSTRUCTOR_PATTERN = ScillaElementType("LITERAL_EXPRESSION")
@@ -43,6 +57,7 @@ class ScillaElementType(@NonNls debugName: String) : IElementType(debugName, Sci
         val LET_EXPRESSION = ScillaElementType("LET_EXPRESSION")
         val MESSAGE_EXPRESSION = ScillaElementType("MESSAGE_EXPRESSION")
         val MESSAGE_ENTRY = ScillaElementType("MESSAGE_ENTRY")
+        val MESSAGE_ENTRY_VALUE = ScillaElementType("MESSAGE_ENTRY_VALUE")
         val FUN_EXPRESSION = ScillaElementType("FUN_EXPRESSION")
         val APP_EXPRESSION = ScillaElementType("APP_EXPRESSION")
         val CONSTR_EXPRESSION = ScillaElementType("CONSTR_EXPRESSION")
@@ -52,6 +67,11 @@ class ScillaElementType(@NonNls debugName: String) : IElementType(debugName, Sci
         val TYPE_APP_EXPRESSION = ScillaElementType("TYPE_APP_EXPRESSION")
         val FIXPOINT_EXPRESSION = ScillaElementType("FIXPOINT_EXPRESSION")
         val GAS_EXPRESSION = ScillaElementType("GAS_EXPRESSION")
+		
+		val FUN_EXPRESSIONS = TokenSet.create(FUN_EXPRESSION, TYPE_FUN_EXPRESSION) 
+		val EXPRESSIONS = TokenSet.create(LITERAL_EXPRESSION, VAR_EXPRESSION, LET_EXPRESSION, MESSAGE_EXPRESSION,
+		 MESSAGE_ENTRY, FUN_EXPRESSION, APP_EXPRESSION, CONSTR_EXPRESSION, MATCH_EXPRESSION, BUILTIN_EXPRESSION,
+		 TYPE_FUN_EXPRESSION, TYPE_APP_EXPRESSION, FIXPOINT_EXPRESSION, GAS_EXPRESSION)
 
 
         val STATEMENT_LIST = ScillaElementType("STATEMENT_LIST")
@@ -67,16 +87,23 @@ class ScillaElementType(@NonNls debugName: String) : IElementType(debugName, Sci
         val ASSIGN_STATEMENT = ScillaElementType("ASSIGN_STATEMENT")
         val CALL_STATEMENT = ScillaElementType("CALL_STATEMENT")
 
+		val STATEMENTS = TokenSet.create(FORALL_STATEMENT, ACCEPT_STATEMENT, EVENT_STATEMENT, MATCH_STATEMENT,
+			THROW_STATEMENT, SEND_STATEMENT, DELETE_STATEMENT, FETCH_STATEMENT, LOCAL_BINDING_STATEMENT, 
+			ASSIGN_STATEMENT, CALL_STATEMENT)
+
         val CONTRACT_DEFINITION = ScillaElementType("CONTRACT_DEFINITION")
-        val PARAMETER_LIST = ScillaElementType("CONTRACT_PARAMETER_LIST")
-        val ID_WITH_TYPE = ScillaElementType("CONTRACT_PARAMETER")
+        val CONTRACT_CONSTRAINT = ScillaElementType("CONTRACT_CONSTRAINT")
+        val ID_WITH_TYPE = ScillaElementType("ID_WITH_TYPE")
         val FIELD_DEFINITION = ScillaElementType("FIELD_DEFINITION")
-        val COMPONENT_DEFINITION = ScillaElementType("COMPONENT_DEFINITION")
+        val TRANSITION_DEFINITION = ScillaElementType("TRANSITION_DEFINITION")
+        val PROCEDURE_DEFINITION = ScillaElementType("PROCEDURE_DEFINITION")
 
         val LIBRARY_DEFINITION = ScillaElementType("LIBRARY")
         val LIBRARY_LET_DEFINITION = ScillaElementType("LIBRARY_LET_DEFINITION")
         val LIBRARY_TYPE_DEFINITION = ScillaElementType("LIBRARY_TYPE_DEFINITION")
         val LIBRARY_TYPE_CONSTRUCTOR = ScillaElementType("LIBRARY_TYPE_CONSTRUCTOR")
+		
+		val LIBRARY_ENTRIES = TokenSet.create(LIBRARY_LET_DEFINITION, LIBRARY_TYPE_DEFINITION)
 
         val SCILLA_VERSION = ScillaElementType("SCILLA_VERSION")
         val IMPORTS = ScillaElementType("IMPORTS")
@@ -104,7 +131,10 @@ class ScillaElementType(@NonNls debugName: String) : IElementType(debugName, Sci
                 PAREN_TYPE -> ScillaParenType(node)
 
                 ID_WITH_TYPE -> ScillaIdWithType(node)
-                PARAMETER_LIST -> ScillaParameterList(node)
+				CONTRACT_PARAMETERS -> ScillaContractParameters(node)
+				COMPONENT_PARAMETERS -> ScillaComponentParameters(node)
+				CONTRACT_REF_PARAMETERS -> ScillaContractRefParameters(node)
+				FUNCTION_PARAMETERS -> ScillaFunctionParameters(node)
 
                 WILDCARD_PATTERN -> ScillaWildcardPattern(node)
                 BINDER_PATTERN -> ScillaBinderPattern(node)
@@ -117,6 +147,7 @@ class ScillaElementType(@NonNls debugName: String) : IElementType(debugName, Sci
                 LET_EXPRESSION -> ScillaLetExpression(node)
                 MESSAGE_EXPRESSION -> ScillaMessageExpression(node)
                 MESSAGE_ENTRY -> ScillaMessageEntry(node)
+                MESSAGE_ENTRY_VALUE -> ScillaMessageEntryValue(node)
                 FUN_EXPRESSION -> ScillaFunExpression(node)
                 APP_EXPRESSION -> ScillaAppExpression(node)
                 CONSTR_EXPRESSION -> ScillaConstrExpression(node)
@@ -141,8 +172,10 @@ class ScillaElementType(@NonNls debugName: String) : IElementType(debugName, Sci
                 CALL_STATEMENT -> ScillaCallStatement(node)
 
                 CONTRACT_DEFINITION -> ScillaContractDefinition(node)
+                CONTRACT_CONSTRAINT -> ScillaContractConstraint(node)
                 FIELD_DEFINITION -> ScillaFieldDefinition(node)
-                COMPONENT_DEFINITION -> ScillaComponentDefinition(node)
+                TRANSITION_DEFINITION -> ScillaTransitionDefinition(node)
+                PROCEDURE_DEFINITION -> ScillaProcedureDefinition(node)
 
                 LIBRARY_DEFINITION -> ScillaLibraryDefinition(node)
                 LIBRARY_LET_DEFINITION -> ScillaLibraryLetDefinition(node)

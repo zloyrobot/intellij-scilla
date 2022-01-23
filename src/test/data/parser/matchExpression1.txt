@@ -69,6 +69,6 @@ FILE
     PsiElement(ScillaTokenType.CONTRACT)('contract')
     PsiWhiteSpace(' ')
     PsiElement(ScillaTokenType.CID)('Y')
-    ScillaParameterList(ScillaElementType.CONTRACT_PARAMETER_LIST)
+    ScillaContractParameters(ScillaElementType.CONTRACT_PARAMETER_LIST)
       PsiElement(ScillaTokenType.LPAREN)('(')
       PsiElement(ScillaTokenType.RPAREN)(')')

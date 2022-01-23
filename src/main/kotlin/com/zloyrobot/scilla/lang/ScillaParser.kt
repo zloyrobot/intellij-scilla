@@ -461,14 +461,20 @@ class ScillaParser : PsiParser {
             if (detectSid()) {
                 parseSidOrSCid(false, "contract field") //TODO: disallow 'Sid MapAccessNonEmptyList'
                 if (isRemote) {
-                    expectAdvance(ScillaTokenType.DOT, "'.'")
-                    if (builder.tokenType == ScillaTokenType.LPAREN) {
-                        assertAdvance(ScillaTokenType.LPAREN)
-                        parseSidOrSCid(false, "remote contract parameter")
-                        expectAdvance(ScillaTokenType.RPAREN, "')'")
-                    }
-                    else if (detectSid())
-                        parseSidOrSCid(false, "remote contract field")
+					if (builder.tokenType == ScillaTokenType.AS) {
+						assertAdvance(ScillaTokenType.AS)
+						parseAddressType()
+					}
+					else {
+						expectAdvance(ScillaTokenType.DOT, "'.'")
+						if (builder.tokenType == ScillaTokenType.LPAREN) {
+							assertAdvance(ScillaTokenType.LPAREN)
+							parseSidOrSCid(false, "remote contract parameter")
+							expectAdvance(ScillaTokenType.RPAREN, "')'")
+						} else 
+							parseSidOrSCid(false, "remote contract field")
+						
+					}
                 }
                 while (builder.tokenType == ScillaTokenType.LBRACKET) {
                     parseMapAccess()
@@ -665,14 +671,12 @@ class ScillaParser : PsiParser {
             if (expectAdvance(ScillaTokenType.CONTRACT, "contract definition")) {
                 expectAdvance(ScillaTokenType.CID, "contract name")
                 if (builder.tokenType == ScillaTokenType.LPAREN)
-                    parseParameterList()
+                    parseParameterList(ScillaElementType.CONTRACT_PARAMETERS)
                 else builder.error("Expected contract parameter list")
 
                 if (builder.tokenType == ScillaTokenType.WITH) {
-                    assertAdvance(ScillaTokenType.WITH)
-                    parseExpression()
-                    expectAdvance(ScillaTokenType.ARROW, "'->'")
-                }
+					parseContractConstraint()
+				}
                 while (builder.tokenType == ScillaTokenType.FIELD) {
                     parseField()
                 }
@@ -686,7 +690,20 @@ class ScillaParser : PsiParser {
             marker.done(ScillaElementType.CONTRACT_DEFINITION)
         }
 
-        private fun parseParameterList() {
+		/**
+		 *   | 'with' Expression '->'
+		 */
+		private fun parseContractConstraint() {
+			val mark = builder.mark()
+			
+			assertAdvance(ScillaTokenType.WITH)
+			parseExpression()
+			expectAdvance(ScillaTokenType.ARROW, "'->'")
+			
+			mark.done(ScillaElementType.CONTRACT_CONSTRAINT)
+		}
+
+		private fun parseParameterList(parametersKind: ScillaElementType) {
             val mark = builder.mark()
 
             assertAdvance(ScillaTokenType.LPAREN)
@@ -695,7 +712,7 @@ class ScillaParser : PsiParser {
             }
             expectAdvance(ScillaTokenType.RPAREN, "')'")
 
-            mark.done(ScillaElementType.PARAMETER_LIST)
+            mark.done(parametersKind)
         }
 
         /** Field:
@@ -746,14 +763,17 @@ class ScillaParser : PsiParser {
             else advance()
 
             if (builder.tokenType == ScillaTokenType.LPAREN)
-                parseParameterList()
+                parseParameterList(ScillaElementType.COMPONENT_PARAMETERS)
             else
                 builder.error("Expected parameter list in parens")
 
             parseStatementList()
             expectAdvance(ScillaTokenType.END, "'end'")
 
-            mark.done(ScillaElementType.COMPONENT_DEFINITION)
+			if (transition)
+            	mark.done(ScillaElementType.TRANSITION_DEFINITION)
+			else
+				mark.done(ScillaElementType.PROCEDURE_DEFINITION)
         }
 
 
@@ -894,7 +914,7 @@ class ScillaParser : PsiParser {
             else {
                 if (expectAdvance(ScillaTokenType.CONTRACT, "'contract'")) {
                     if (builder.tokenType == ScillaTokenType.LPAREN) {
-                        parseParameterList()
+                        parseParameterList(ScillaElementType.CONTRACT_REF_PARAMETERS)
                     }
                     while (builder.tokenType == ScillaTokenType.FIELD) {
                         parseAddressTypeField()
@@ -1035,12 +1055,14 @@ class ScillaParser : PsiParser {
         private fun parseFunExpression() {
             val marker = builder.mark()
             assertAdvance(ScillaTokenType.FUN)
-            if (expectAdvance(ScillaTokenType.LPAREN, "'('")) {
-                parseIdWithType("function parameter")
-                expectAdvance(ScillaTokenType.RPAREN, "')'")
+            if (builder.tokenType == ScillaTokenType.LPAREN) {
+				parseParameterList(ScillaElementType.FUNCTION_PARAMETERS) // according to grammar only one parameter is allowed, check it in daemon
                 expectAdvance(ScillaTokenType.ARROW, "function arrow ('=>')")
                 parseExpression()
             }
+			else 
+				builder.error("Expected function parameter")
+			
             marker.done(ScillaElementType.FUN_EXPRESSION)
         }
 
@@ -1383,8 +1405,12 @@ class ScillaParser : PsiParser {
                 val msgMark = builder.mark()
                 parseSidOrSCid(false, "message field")
                 expectAdvance(ScillaTokenType.COLON, "':'")
+				
+				val fieldValueMark = builder.mark()
                 if (!tryParseLiteral())
                     parseSidOrSCid(false, "literal or value $identBeginningWithLowerCaseLetter")
+				fieldValueMark.done(ScillaElementType.MESSAGE_ENTRY_VALUE)
+				
                 msgMark.done(ScillaElementType.MESSAGE_ENTRY)
             }
             expectAdvance(ScillaTokenType.RBRACE, "'}'")
