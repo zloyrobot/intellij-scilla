@@ -1,0 +1,13 @@
+scilla_version 0
+
+library A
+
+contract X()
+
+transition B(
+	name: String
+	address: ByStr20,
+	long_status: Uint32
+)
+
+end

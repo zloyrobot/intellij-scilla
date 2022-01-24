@@ -1,0 +1,17 @@
+scilla_version 0
+
+
+
+
+contract X()
+
+transition XY()
+	msg = {
+		_tag:     "Tag";
+		receiver: address;
+		status:   long_status }
+	};
+
+	msgs = one_msg msg;
+	send msgs
+end

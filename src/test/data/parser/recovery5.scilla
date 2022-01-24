@@ -1,0 +1,9 @@
+scilla_version 0
+
+(* Comment *)
+library X
+
+type T = |XXX | YYY of
+
+contract A()
+

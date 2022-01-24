@@ -1,0 +1,20 @@
+scilla_version 0
+
+
+library SampleLibrary
+
+
+
+transition SampleTransition(
+	name: String,
+	address: ByStr20,
+	long_status: Uint32
+)
+	msg = {
+		_tag:     "Tag";
+		receiver: address;
+		status:   long_status
+	};
+	msgs = one_msg msg;
+	send msgs
+end

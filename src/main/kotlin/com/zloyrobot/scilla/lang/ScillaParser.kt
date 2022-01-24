@@ -326,6 +326,10 @@ class ScillaParser : PsiParser {
             while (builder.tokenType != null && builder.tokenType != ScillaTokenType.CONTRACT) {
                 if (builder.tokenType == ScillaTokenType.LET || builder.tokenType == ScillaTokenType.TYPE)
                     parseLibraryEntry()
+				else if (builder.tokenType == ScillaTokenType.TRANSITION || builder.tokenType == ScillaTokenType.PROCEDURE) {
+					//Parser error will be reported by parseContract method
+					break
+				}
                 else {
                     errorAdvance("let binding, type declaration or contract definition")
                 }
@@ -367,7 +371,10 @@ class ScillaParser : PsiParser {
             expectAdvance(ScillaTokenType.CID, "type constructor name")
             if (builder.tokenType == ScillaTokenType.OF) {
                 assertAdvance(ScillaTokenType.OF)
-                while (builder.tokenType != null) {
+				if (!tryParseTypeArg()) {
+					builder.error("Expected type parameter")
+				}
+				else while (builder.tokenType != null) {
                     if (!tryParseTypeArg())
                         break
                 }
@@ -516,11 +523,15 @@ class ScillaParser : PsiParser {
 
         private fun parseStatementList() {
             val statementsMark = builder.mark()
-            while (tryParseStatement()) {
-                if (builder.tokenType == ScillaTokenType.SEMICOLON)
-                    advance()
-                else break
-            }
+			parseLoop("statement", ScillaTokenType.SEMICOLON, "';'", listOf(
+				ScillaTokenType.END,
+				ScillaTokenType.CONTRACT, 
+				ScillaTokenType.LIBRARY,
+				ScillaTokenType.TRANSITION,
+				ScillaTokenType.PROCEDURE)) {
+				
+				tryParseStatement()
+			}
             statementsMark.done(ScillaElementType.STATEMENT_LIST)
         }
 
@@ -707,7 +718,15 @@ class ScillaParser : PsiParser {
             val mark = builder.mark()
 
             assertAdvance(ScillaTokenType.LPAREN)
-            parseLoop(ScillaTokenType.COMMA, listOf(ScillaTokenType.RPAREN), "')'") {
+            parseLoop("parameter", ScillaTokenType.COMMA, "','", listOf(
+				ScillaTokenType.RPAREN,
+				ScillaTokenType.LET,
+				ScillaTokenType.TYPE,
+				ScillaTokenType.END,
+				ScillaTokenType.CONTRACT,
+				ScillaTokenType.LIBRARY,
+				ScillaTokenType.TRANSITION,
+				ScillaTokenType.PROCEDURE)) {
                 parseIdWithType("parameter")
             }
             expectAdvance(ScillaTokenType.RPAREN, "')'")
@@ -1095,7 +1114,7 @@ class ScillaParser : PsiParser {
             expectAdvance(ScillaTokenType.ID, "builtin function")
             if (builder.tokenType == ScillaTokenType.LBRACE) {
                 assertAdvance(ScillaTokenType.LBRACE)
-                parseLoop(null, listOf(ScillaTokenType.RBRACE), "'}'") {
+                parseLoop("type argument",null, null, listOf(ScillaTokenType.RBRACE)) {
                     tryParseTypeArg()
                 }
                 expectAdvance(ScillaTokenType.RBRACE, "'}'")
@@ -1239,7 +1258,7 @@ class ScillaParser : PsiParser {
         private fun parseSCidAndMapValueArgList(allowTypeArgs: Boolean) {
             parseSidOrSCid(true, "type")
             if (allowTypeArgs) {
-                parseLoop(null, listOf(ScillaTokenType.RPAREN), "')'") {
+                parseLoop("map argument", null, null, listOf(ScillaTokenType.RPAREN)) {
                     //We should parse 'MapValueArg' here, but it's identical to 'MapValue' except allowing AddressType
                     parseMapValue(allowTypeArgs = false)
                 }
@@ -1401,7 +1420,7 @@ class ScillaParser : PsiParser {
         private fun parseMessageConstruction() {
             val mark = builder.mark()
             assertAdvance(ScillaTokenType.LBRACE)
-            parseLoop(ScillaTokenType.SEMICOLON, listOf(ScillaTokenType.RBRACE), "'}'") {
+            parseLoop("message entry", ScillaTokenType.SEMICOLON, "';'", listOf(ScillaTokenType.RBRACE)) {
                 val msgMark = builder.mark()
                 parseSidOrSCid(false, "message field")
                 expectAdvance(ScillaTokenType.COLON, "':'")
@@ -1429,7 +1448,7 @@ class ScillaParser : PsiParser {
 
             if (builder.tokenType == ScillaTokenType.LBRACE) {
                 assertAdvance(ScillaTokenType.LBRACE)
-                parseLoop(null, listOf(ScillaTokenType.RBRACE), "'}'") {
+                parseLoop("type argument",null, null, listOf(ScillaTokenType.RBRACE), ) {
                     tryParseTypeArg()
                 }
                 expectAdvance(ScillaTokenType.RBRACE, "'}'")
@@ -1475,13 +1494,15 @@ class ScillaParser : PsiParser {
             mark.done(ScillaElementType.TYPE_APP_EXPRESSION)
         }
 
-        private fun parseLoop(separator: ScillaTokenType?, stopper: List<ScillaTokenType>, stopperName: String, bodyParser: () -> Unit) {
+        private fun parseLoop(itemName: String, separator: ScillaTokenType?, separatorName: String?, stopper: List<ScillaTokenType>, itemParser: () -> Unit) {
+			assert(separator == null && separatorName == null || separator != null && separatorName != null)
+			
             while (builder.tokenType != null && builder.tokenType !in stopper) {
                 val offsetBeforeBody = builder.currentOffset
-                bodyParser()
+                itemParser()
 
                 if (builder.currentOffset == offsetBeforeBody) {
-                    errorAdvance("Unexpected token") //TODO: improve error message
+                    errorAdvance(itemName)
                     continue
                 }
 
@@ -1495,8 +1516,8 @@ class ScillaParser : PsiParser {
                     break
                 }
                 else {
-                    builder.error("Expected $stopperName")
-                    break
+                    builder.error("Expected $separatorName")
+                    continue
                 }
             }
         }

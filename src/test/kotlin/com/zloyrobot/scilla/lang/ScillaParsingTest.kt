@@ -41,4 +41,10 @@ class ScillaParsingTest : ScillaParsingTestBase("parser") {
   fun testBuiltinExpression2() = doTest(true)
   fun testType0() = doTest(true)
   fun testType1() = doTest(true)
+  fun testRecovery0() = doTest(true)
+  fun testRecovery1() = doTest(true)
+  fun testRecovery2() = doTest(true)
+  fun testRecovery3() = doTest(true)
+  fun testRecovery4() = doTest(true)
+  fun testRecovery5() = doTest(true)
 }
