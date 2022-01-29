@@ -28,6 +28,8 @@ class ScillaParsingTest : ScillaParsingTestBase("parser") {
   fun testMatchExpression1() = doTest(true)
   fun testMatchExpression2() = doTest(true)
   fun testMatchExpression3() = doTest(true)
+  fun testMatchExpression4() = doTest(true)
+  fun testMatchExpression5() = doTest(true)
   fun testFunExpression0() = doTest(true)
   fun testFunExpression1() = doTest(true)
   fun testTfunExpression0() = doTest(true)

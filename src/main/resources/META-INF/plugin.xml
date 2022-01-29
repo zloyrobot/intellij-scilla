@@ -13,6 +13,10 @@
     <extensions defaultExtensionNs="com.intellij">
         <fileType name="Scilla" language="Scilla" implementationClass="com.zloyrobot.scilla.lang.ScillaFileType" extensions="scilla" fieldName="INSTANCE"/>
         <lang.parserDefinition language="Scilla" implementationClass="com.zloyrobot.scilla.lang.ScillaParserDefinition"/>
+		<stubIndex implementation="com.zloyrobot.scilla.lang.ScillaSymbolIndex"/>
+		<stubIndex implementation="com.zloyrobot.scilla.lang.ScillaContractLibraryAndTypeIndex"/>
+		
+		
         <lang.syntaxHighlighterFactory language="Scilla" implementationClass="com.zloyrobot.scilla.ide.ScillaSyntaxHighlighterFactory"/>
 		<lang.foldingBuilder language="Scilla" implementationClass="com.zloyrobot.scilla.ide.ScillaFoldingBuilder"/>
 		<lang.psiStructureViewFactory language="Scilla" implementationClass="com.zloyrobot.scilla.ide.ScillaStructureViewBuilderFactory"/>
@@ -20,6 +24,11 @@
 		<codeStyleSettingsProvider implementation="com.zloyrobot.scilla.ide.ScillaCodeStyleSettingsProvider"/>
 		<langCodeStyleSettingsProvider implementation="com.zloyrobot.scilla.ide.ScillaLanguageCodeStyleSettingsProvider"/>
 		<braceMatcher filetype="Scilla" implementationClass="com.zloyrobot.scilla.ide.ScillaBraceMatcher"/>
+		<iconProvider implementation="com.zloyrobot.scilla.ide.ScillaIconProvider" order="first" id="DartIconProvider"/>
+		
+		<gotoClassContributor implementation="com.zloyrobot.scilla.ide.ScillaGotoClassContributor"/>
+		<gotoSymbolContributor implementation="com.zloyrobot.scilla.ide.ScillaGotoSymbolContributor"/>
+		
     </extensions>
 
 </idea-plugin>

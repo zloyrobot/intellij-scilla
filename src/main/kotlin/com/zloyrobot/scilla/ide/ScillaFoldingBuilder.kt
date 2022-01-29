@@ -28,19 +28,19 @@ class ScillaFoldingBuilder : FoldingBuilderEx(), DumbAware {
 
 		private fun tryBuildFoldingForElement(element: PsiElement) {
 			val range = when (element) {
-				is ScillaComponentDefinition -> TextRange(
+				is ScillaComponent<*, *> -> TextRange(
 					/* startOffset = */ element.parameterList?.endOffset
 						?: element.nameIdentifier?.endOffset
 						?: element.definitionKeyword.endOffset,
 					/* endOffset = */ element.endKeyword?.startOffset ?: element.endOffset)
 
-				is ScillaLibraryTypeDefinition -> TextRange(
+				is ScillaLibraryType -> TextRange(
 					/* startOffset = */ element.eqToken?.endOffset
 						?: element.nameIdentifier?.endOffset
 						?: element.typeKeyword.endOffset,
 					/* endOffset = */ element.endOffset)
 
-				is ScillaLibraryLetDefinition -> TextRange(
+				is ScillaLibraryLet -> TextRange(
 					/* startOffset = */ element.eqToken?.endOffset
 						?: element.nameIdentifier?.endOffset
 						?: element.letKeyword.endOffset,

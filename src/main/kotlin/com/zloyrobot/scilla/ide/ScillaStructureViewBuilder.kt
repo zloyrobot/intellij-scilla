@@ -1,15 +1,13 @@
 package com.zloyrobot.scilla.ide
 
-import com.intellij.icons.AllIcons
 import com.intellij.ide.structureView.*
 import com.intellij.ide.structureView.impl.common.PsiTreeElementBase
 import com.intellij.lang.PsiStructureViewFactory
+import com.intellij.navigation.ItemPresentation
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.fileTypes.PlainTextFileType
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.zloyrobot.scilla.lang.*
-import javax.swing.Icon
 
 class ScillaStructureViewBuilderFactory : PsiStructureViewFactory {
 	override fun getStructureViewBuilder(psiFile: PsiFile): StructureViewBuilder {
@@ -27,10 +25,18 @@ class ScillaStructureViewBuilder(editor: Editor?, file: ScillaFile) : TextEditor
 	companion object {
 		private fun canHaveChildren(element: Any) = when (element) {
 			is ScillaFile,
-			is ScillaLibraryDefinition,
-			is ScillaLibraryEntry,
-			is ScillaContractDefinition,
-			is ScillaComponentDefinition -> true
+			is ScillaLibrary,
+			is ScillaLibraryEntry<*, *>,
+			is ScillaContract -> true
+			else -> false
+		}
+		private fun isPresentable(element: Any) = when (element) {
+			is ScillaFile,
+			is ScillaLibrary,
+			is ScillaLibraryEntry<*, *>,
+			is ScillaContract,
+			is ScillaField,
+			is ScillaComponent<*, *> -> true
 			else -> false
 		}
 	}
@@ -41,35 +47,13 @@ class ScillaStructureViewBuilder(editor: Editor?, file: ScillaFile) : TextEditor
 
 
 	class TreeElement(item: PsiElement) : PsiTreeElementBase<PsiElement>(item) {
-		override fun getPresentableText(): String {
-			return when(val element = this.element) {
-				is ScillaFile -> element.name
-				is ScillaNamedElement -> element.name
-				else -> ""
-			}
+		override fun getPresentableText(): String? {
+			return (element as ScillaNavigatableElement).name
 		}
-		
-		override fun getIcon(open: Boolean): Icon? {
-			return when(val element = element) {
-				is ScillaFile -> PlainTextFileType.INSTANCE.icon
-				is ScillaLibraryDefinition -> AllIcons.Nodes.PpLib
-				is ScillaLibraryTypeDefinition -> AllIcons.Nodes.Type
-				is ScillaContractDefinition -> AllIcons.Nodes.Class
-				is ScillaTransitionDefinition -> AllIcons.Nodes.Test 
-				is ScillaProcedureDefinition -> AllIcons.Nodes.Property
-				
-				is ScillaLibraryLetDefinition -> when(element.expression) {
-					is ScillaFunExpression, is ScillaTFunExpression -> AllIcons.Nodes.Function
-					else -> AllIcons.Nodes.Constant 
-				}
-				
-				else -> AllIcons.Nodes.Unknown
-			}
-		} 
 
 		override fun getChildrenBase(): Collection<StructureViewTreeElement> {
 			val node = element ?: return emptyList()
-			return node.children.filter {canHaveChildren(it)}.sortedBy { it.textOffset }.map { TreeElement(it) }
+			return node.children.filter { isPresentable(it)}.sortedBy { it.textOffset }.map { TreeElement(it) }
 		}
 	}
 

@@ -1,4 +1,4 @@
-     package com.zloyrobot.scilla.lang
+package com.zloyrobot.scilla.lang
 
 import com.intellij.lang.ASTNode
 import com.intellij.psi.PsiElement
@@ -7,13 +7,11 @@ import com.intellij.psi.tree.IFileElementType
 import com.intellij.psi.tree.TokenSet
 import org.jetbrains.annotations.NonNls
 
-class ScillaElementType(@NonNls debugName: String) : IElementType(debugName, ScillaLanguage) {
-    override fun toString(): String {
-        return "ScillaElementType." + super.toString()
-    }
 
+class ScillaElementType(@NonNls debugName: String) : IElementType(debugName, ScillaLanguage) {
     companion object {
         val SCILLA_CONTRACT_FILE = IFileElementType(ScillaLanguage)
+        val SCILLA_CONTRACT_STUB_FILE = ScillaStubFileElementType()
 
         val SIMPLE_REF = ScillaElementType("SIMPLE_REF")
         val QUALIFIED_REF = ScillaElementType("QUALIFIED_REF")
@@ -91,16 +89,16 @@ class ScillaElementType(@NonNls debugName: String) : IElementType(debugName, Sci
 			THROW_STATEMENT, SEND_STATEMENT, DELETE_STATEMENT, FETCH_STATEMENT, LOCAL_BINDING_STATEMENT, 
 			ASSIGN_STATEMENT, CALL_STATEMENT)
 
-        val CONTRACT_DEFINITION = ScillaElementType("CONTRACT_DEFINITION")
+        val CONTRACT_DEFINITION = ScillaContractStubElementType("CONTRACT_DEFINITION")
         val CONTRACT_CONSTRAINT = ScillaElementType("CONTRACT_CONSTRAINT")
         val ID_WITH_TYPE = ScillaElementType("ID_WITH_TYPE")
-        val FIELD_DEFINITION = ScillaElementType("FIELD_DEFINITION")
-        val TRANSITION_DEFINITION = ScillaElementType("TRANSITION_DEFINITION")
-        val PROCEDURE_DEFINITION = ScillaElementType("PROCEDURE_DEFINITION")
+        val FIELD_DEFINITION = ScillaFieldStubElementType("FIELD_DEFINITION")
+        val TRANSITION_DEFINITION = ScillaTransitionStubElementType("TRANSITION_DEFINITION")
+        val PROCEDURE_DEFINITION = ScillaProcedureStubElementType("PROCEDURE_DEFINITION")
 
-        val LIBRARY_DEFINITION = ScillaElementType("LIBRARY")
-        val LIBRARY_LET_DEFINITION = ScillaElementType("LIBRARY_LET_DEFINITION")
-        val LIBRARY_TYPE_DEFINITION = ScillaElementType("LIBRARY_TYPE_DEFINITION")
+        val LIBRARY_DEFINITION = ScillaLibraryStubElementType("LIBRARY")
+        val LIBRARY_LET_DEFINITION = ScillaLibraryLetStubElementType("LIBRARY_LET_DEFINITION")
+        val LIBRARY_TYPE_DEFINITION = ScillaLibraryTypeStubElementType("LIBRARY_TYPE_DEFINITION")
         val LIBRARY_TYPE_CONSTRUCTOR = ScillaElementType("LIBRARY_TYPE_CONSTRUCTOR")
 		
 		val LIBRARY_ENTRIES = TokenSet.create(LIBRARY_LET_DEFINITION, LIBRARY_TYPE_DEFINITION)
@@ -171,15 +169,15 @@ class ScillaElementType(@NonNls debugName: String) : IElementType(debugName, Sci
                 ASSIGN_STATEMENT -> ScillaAssignStatement(node)
                 CALL_STATEMENT -> ScillaCallStatement(node)
 
-                CONTRACT_DEFINITION -> ScillaContractDefinition(node)
+                CONTRACT_DEFINITION -> ScillaContract(node)
                 CONTRACT_CONSTRAINT -> ScillaContractConstraint(node)
-                FIELD_DEFINITION -> ScillaFieldDefinition(node)
-                TRANSITION_DEFINITION -> ScillaTransitionDefinition(node)
-                PROCEDURE_DEFINITION -> ScillaProcedureDefinition(node)
+                FIELD_DEFINITION -> ScillaField(node)
+                TRANSITION_DEFINITION -> ScillaTransition(node)
+                PROCEDURE_DEFINITION -> ScillaProcedure(node)
 
-                LIBRARY_DEFINITION -> ScillaLibraryDefinition(node)
-                LIBRARY_LET_DEFINITION -> ScillaLibraryLetDefinition(node)
-                LIBRARY_TYPE_DEFINITION -> ScillaLibraryTypeDefinition(node)
+                LIBRARY_DEFINITION -> ScillaLibrary(node)
+                LIBRARY_LET_DEFINITION -> ScillaLibraryLet(node)
+                LIBRARY_TYPE_DEFINITION -> ScillaLibraryType(node)
                 LIBRARY_TYPE_CONSTRUCTOR -> ScillaLibraryTypeConstructor(node)
 
                 SCILLA_VERSION -> ScillaVersion(node)

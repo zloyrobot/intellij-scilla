@@ -1,0 +1,13 @@
+scilla_version 0
+
+library X
+
+contract Y()
+
+transition ttt(b: Bool)
+  x = Uint32 0;
+  match b with
+  | True => x = Uint32 1
+  | False =>
+  end
+end

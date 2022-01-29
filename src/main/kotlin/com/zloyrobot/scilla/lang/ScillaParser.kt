@@ -353,7 +353,7 @@ class ScillaParser : PsiParser {
                     expectAdvance(ScillaTokenType.CID, "type name")
                     if (builder.tokenType == ScillaTokenType.EQ) {
                         assertAdvance(ScillaTokenType.EQ)
-                        while (builder.tokenType == ScillaTokenType.BAR)
+                        while (builder.tokenType == ScillaTokenType.BAR || detectSCid() || detectSid())
                             parseTypeConstructor()
                     }
                     mark.done(ScillaElementType.LIBRARY_TYPE_DEFINITION)
@@ -367,7 +367,7 @@ class ScillaParser : PsiParser {
         */
         private fun parseTypeConstructor() {
             val mark = builder.mark()
-            assertAdvance(ScillaTokenType.BAR)
+            expectAdvance(ScillaTokenType.BAR, "'|' before type constructor name")
             expectAdvance(ScillaTokenType.CID, "type constructor name")
             if (builder.tokenType == ScillaTokenType.OF) {
                 assertAdvance(ScillaTokenType.OF)
@@ -525,6 +525,7 @@ class ScillaParser : PsiParser {
             val statementsMark = builder.mark()
 			parseLoop("statement", ScillaTokenType.SEMICOLON, "';'", listOf(
 				ScillaTokenType.END,
+				ScillaTokenType.BAR,
 				ScillaTokenType.CONTRACT, 
 				ScillaTokenType.LIBRARY,
 				ScillaTokenType.TRANSITION,
@@ -741,7 +742,10 @@ class ScillaParser : PsiParser {
             val marker = builder.mark()
 
             assertAdvance(ScillaTokenType.FIELD)
-            parseIdWithType("field name")
+			
+			expectAdvance(ScillaTokenType.ID, "field name")
+			parseTypeAnnotation()
+			
             if (expectAdvance(ScillaTokenType.EQ, "'='"))
                 parseExpression()
 
@@ -1576,7 +1580,7 @@ class ScillaParserDefinition : ParserDefinition {
     }
 
     override fun getFileNodeType(): IFileElementType {
-        return ScillaElementType.SCILLA_CONTRACT_FILE
+        return ScillaElementType.SCILLA_CONTRACT_STUB_FILE
     }
 
     override fun getCommentTokens(): TokenSet {

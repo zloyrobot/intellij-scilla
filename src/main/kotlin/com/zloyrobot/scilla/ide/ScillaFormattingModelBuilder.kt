@@ -159,8 +159,6 @@ class ScillaFormattingModelBuilder : FormattingModelBuilder {
 				
 				//Around
 				.aroundInside(ScillaTokenType.ARROW, ScillaElementType.PATTERN_MATCH_CLAUSE)
-					.spaceIf(settings.SPACE_AROUND_ARROW_IN_MATCH, true)
-				.aroundInside(ScillaTokenType.ARROW, ScillaElementType.PATTERN_MATCH_CLAUSE)
 					.spaceIf(settings.SPACE_AROUND_ARROW_IN_MATCH)
 				.aroundInside(ScillaTokenType.ARROW, ScillaElementType.FUN_EXPRESSIONS)
 					.spaceIf(settings.SPACE_AROUND_ARROW_IN_FUNCTION)
@@ -313,7 +311,10 @@ class ScillaFormattingBlock(
 		
 	}
 	override fun getIndent(): Indent {
-		return if (node.firstChildNode != null) getChildIndent(node.treeParent) else Indent.getNoneIndent()
+		if (node.firstChildNode != null || ScillaTokenType.COMMENTS.contains(node.elementType)) 
+			return getChildIndent(node.treeParent)
+		else 
+			return Indent.getNoneIndent()
 	}
 
 	private fun getChildIndent(parent: ASTNode?): Indent {
@@ -321,19 +322,23 @@ class ScillaFormattingBlock(
 			return Indent.getNoneIndent()
 		
 		return when (parent.elementType) {
-			ScillaElementType.STATEMENT_LIST,
 			ScillaElementType.LIBRARY_LET_DEFINITION,
 			ScillaElementType.CONTRACT_CONSTRAINT -> {
 				Indent.getNormalIndent()
 			}
 			ScillaElementType.PATTERN_MATCH_CLAUSE -> {
-				if (parent.treeParent?.elementType == ScillaElementType.MATCH_EXPRESSION) {
-					//STATEMENT_LIST indents statements 
-					Indent.getNormalIndent()
-				} else Indent.getNoneIndent()
+				Indent.getNormalIndent()
 			}
 			
-			in ScillaElementType.CONTRACT_OR_COMPONENT_PARAMETERS,
+			ScillaElementType.STATEMENT_LIST -> {
+				if (parent.treeParent.elementType != ScillaElementType.PATTERN_MATCH_CLAUSE)
+					Indent.getNormalIndent()
+				else
+					Indent.getNoneIndent()
+			}
+			
+			ScillaElementType.CONTRACT_PARAMETERS,
+			ScillaElementType.COMPONENT_PARAMETERS,
 			ScillaElementType.FUNCTION_PARAMETERS,
 			ScillaElementType.CONTRACT_REF_PARAMETERS,
 			ScillaElementType.MESSAGE_EXPRESSION -> {
