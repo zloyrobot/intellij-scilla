@@ -11,24 +11,34 @@
     <depends>com.intellij.modules.lang</depends>
 
     <extensions defaultExtensionNs="com.intellij">
-        <fileType name="Scilla" language="Scilla" implementationClass="com.zloyrobot.scilla.lang.ScillaFileType" extensions="scilla" fieldName="INSTANCE"/>
+        <fileType name="Scilla" language="Scilla" implementationClass="com.zloyrobot.scilla.lang.ScillaFileType" extensions="scilla;scillib" fieldName="INSTANCE"/>
         <lang.parserDefinition language="Scilla" implementationClass="com.zloyrobot.scilla.lang.ScillaParserDefinition"/>
 		<stubIndex implementation="com.zloyrobot.scilla.lang.ScillaSymbolIndex"/>
 		<stubIndex implementation="com.zloyrobot.scilla.lang.ScillaContractLibraryAndTypeIndex"/>
+		<stubIndex implementation="com.zloyrobot.scilla.lang.ScillaLibraryIndex"/>
 		
 		
         <lang.syntaxHighlighterFactory language="Scilla" implementationClass="com.zloyrobot.scilla.ide.ScillaSyntaxHighlighterFactory"/>
 		<lang.foldingBuilder language="Scilla" implementationClass="com.zloyrobot.scilla.ide.ScillaFoldingBuilder"/>
 		<lang.psiStructureViewFactory language="Scilla" implementationClass="com.zloyrobot.scilla.ide.ScillaStructureViewBuilderFactory"/>
+		<lang.findUsagesProvider language="Scilla" implementationClass="com.zloyrobot.scilla.ide.ScillaFindUsagesProvider"/>
 		<lang.formatter language="Scilla" implementationClass="com.zloyrobot.scilla.ide.ScillaFormattingModelBuilder"/>
+		<annotator language="Scilla" implementationClass="com.zloyrobot.scilla.ide.ScillaIdentifierHighlighter"/>
 		<codeStyleSettingsProvider implementation="com.zloyrobot.scilla.ide.ScillaCodeStyleSettingsProvider"/>
 		<langCodeStyleSettingsProvider implementation="com.zloyrobot.scilla.ide.ScillaLanguageCodeStyleSettingsProvider"/>
 		<braceMatcher filetype="Scilla" implementationClass="com.zloyrobot.scilla.ide.ScillaBraceMatcher"/>
 		<iconProvider implementation="com.zloyrobot.scilla.ide.ScillaIconProvider" order="first" id="DartIconProvider"/>
+		<colorSettingsPage implementation="com.zloyrobot.scilla.ide.ScillaColorSettingsPage"/>
+		<elementDescriptionProvider implementation="com.zloyrobot.scilla.ide.ScillaElementDescriptionProvider"/>
+		
 		
 		<gotoClassContributor implementation="com.zloyrobot.scilla.ide.ScillaGotoClassContributor"/>
 		<gotoSymbolContributor implementation="com.zloyrobot.scilla.ide.ScillaGotoSymbolContributor"/>
-		
-    </extensions>
+
+
+		<localInspection language="Scilla" groupName="Scilla" displayName="Symbol is unresolved" enabledByDefault="true" level="ERROR" implementationClass="com.zloyrobot.scilla.ide.ScillaUnresolvedReferenceHighlighter"/>
+
+
+	</extensions>
 
 </idea-plugin>

@@ -5,7 +5,7 @@ import com.intellij.psi.tree.IStubFileElementType
 
 
 class ScillaStubFileElementType : IStubFileElementType<PsiFileStub<ScillaFile>>(ScillaLanguage) {
-	override fun getStubVersion(): Int = 1
+	override fun getStubVersion(): Int = 2
 }
 
 class ScillaContractStubElementType(val id: String) : IStubElementType<ScillaContractStub, ScillaContract>(id, ScillaLanguage) {
@@ -75,25 +75,25 @@ class ScillaProcedureStubElementType(val id: String) : IStubElementType<ScillaPr
 	}
 }
 
-class ScillaFieldStubElementType(val id: String) : IStubElementType<ScillaFieldStub, ScillaField>(id, ScillaLanguage) {
+class ScillaFieldStubElementType(val id: String) : IStubElementType<ScillaUserFieldStub, ScillaUserField>(id, ScillaLanguage) {
 	override fun getExternalId(): String = id
 
-	override fun serialize(stub: ScillaFieldStub, dataStream: StubOutputStream) {
+	override fun serialize(stub: ScillaUserFieldStub, dataStream: StubOutputStream) {
 		dataStream.writeName(stub.name)
 	}
-	override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?): ScillaFieldStub {
-		return ScillaFieldStub(parentStub, dataStream.readNameString())
+	override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?): ScillaUserFieldStub {
+		return ScillaUserFieldStub(parentStub, dataStream.readNameString())
 	}
-	override fun indexStub(stub: ScillaFieldStub, sink: IndexSink) {
+	override fun indexStub(stub: ScillaUserFieldStub, sink: IndexSink) {
 		if (stub.name != null) {
 			sink.occurrence(ScillaSymbolIndex.KEY, stub.name)
 		}
 	}
-	override fun createPsi(stub: ScillaFieldStub): ScillaField {
-		return ScillaField(stub)
+	override fun createPsi(stub: ScillaUserFieldStub): ScillaUserField {
+		return ScillaUserField(stub)
 	}
-	override fun createStub(psi: ScillaField, parentStub: StubElement<*>?): ScillaFieldStub {
-		return ScillaFieldStub(parentStub, psi.name)
+	override fun createStub(psi: ScillaUserField, parentStub: StubElement<*>?): ScillaUserFieldStub {
+		return ScillaUserFieldStub(parentStub, psi.name)
 	}
 }
 
@@ -111,6 +111,7 @@ class ScillaLibraryStubElementType(val id: String) : IStubElementType<ScillaLibr
 		if (stub.name != null) {
 			sink.occurrence(ScillaSymbolIndex.KEY, stub.name)
 			sink.occurrence(ScillaContractLibraryAndTypeIndex.KEY, stub.name)
+			sink.occurrence(ScillaLibraryIndex.KEY, stub.name)
 		}
 	}
 	override fun createPsi(stub: ScillaLibraryStub): ScillaLibrary {
@@ -165,6 +166,68 @@ class ScillaLibraryTypeStubElementType(val id: String) : IStubElementType<Scilla
 		return ScillaLibraryTypeStub(parentStub, psi.name)
 	}
 }
+
+
+class ScillaLibraryTypeConstructorStubElementType(val id: String) : IStubElementType<ScillaLibraryTypeConstructorStub, ScillaLibraryTypeConstructor>(id, ScillaLanguage) {
+	override fun getExternalId(): String = id
+
+	override fun serialize(stub: ScillaLibraryTypeConstructorStub, dataStream: StubOutputStream) {
+		dataStream.writeName(stub.name)
+	}
+	override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?): ScillaLibraryTypeConstructorStub {
+		return ScillaLibraryTypeConstructorStub(parentStub, dataStream.readNameString())
+	}
+	override fun indexStub(stub: ScillaLibraryTypeConstructorStub, sink: IndexSink) {
+		if (stub.name != null) {
+			sink.occurrence(ScillaSymbolIndex.KEY, stub.name)
+		}
+	}
+	override fun createPsi(stub: ScillaLibraryTypeConstructorStub): ScillaLibraryTypeConstructor {
+		return ScillaLibraryTypeConstructor(stub)
+	}
+	override fun createStub(psi: ScillaLibraryTypeConstructor, parentStub: StubElement<*>?): ScillaLibraryTypeConstructorStub {
+		return ScillaLibraryTypeConstructorStub(parentStub, psi.name)
+	}
+}
+
+class ScillaImportsStubElementType(val id: String) : IStubElementType<ScillaImportsStub, ScillaImports>(id, ScillaLanguage) {
+	override fun getExternalId(): String = id
+
+	override fun serialize(stub: ScillaImportsStub, dataStream: StubOutputStream) {
+	}
+	override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?): ScillaImportsStub {
+		return ScillaImportsStub(parentStub)
+	}
+	override fun indexStub(stub: ScillaImportsStub, sink: IndexSink) {
+	}
+	override fun createPsi(stub: ScillaImportsStub): ScillaImports {
+		return ScillaImports(stub)
+	}
+	override fun createStub(psi: ScillaImports, parentStub: StubElement<*>?): ScillaImportsStub {
+		return ScillaImportsStub(parentStub)
+	}
+}
+
+
+class ScillaImportStubElementType(val id: String) : IStubElementType<ScillaImportStub, ScillaImport>(id, ScillaLanguage) {
+	override fun getExternalId(): String = id
+
+	override fun serialize(stub: ScillaImportStub, dataStream: StubOutputStream) {
+		dataStream.writeName(stub.name)
+	}
+	override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?): ScillaImportStub {
+		return ScillaImportStub(parentStub, dataStream.readNameString())
+	}
+	override fun indexStub(stub: ScillaImportStub, sink: IndexSink) {
+	}
+	override fun createPsi(stub: ScillaImportStub): ScillaImport {
+		return ScillaImport(stub)
+	}
+	override fun createStub(psi: ScillaImport, parentStub: StubElement<*>?): ScillaImportStub {
+		return ScillaImportStub(parentStub, psi.name)
+	}
+}
+
 
 
 

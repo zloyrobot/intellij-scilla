@@ -3,7 +3,6 @@ package com.zloyrobot.scilla.ide
 import com.intellij.ide.structureView.*
 import com.intellij.ide.structureView.impl.common.PsiTreeElementBase
 import com.intellij.lang.PsiStructureViewFactory
-import com.intellij.navigation.ItemPresentation
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
@@ -35,7 +34,7 @@ class ScillaStructureViewBuilder(editor: Editor?, file: ScillaFile) : TextEditor
 			is ScillaLibrary,
 			is ScillaLibraryEntry<*, *>,
 			is ScillaContract,
-			is ScillaField,
+			is ScillaUserField,
 			is ScillaComponent<*, *> -> true
 			else -> false
 		}

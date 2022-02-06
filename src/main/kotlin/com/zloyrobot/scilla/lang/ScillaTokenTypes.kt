@@ -72,6 +72,7 @@ class ScillaTokenType(@NonNls debugName: String) : IElementType(debugName, Scill
 
         val COMMENTS = TokenSet.create(COMMENT)
         val STRINGS = TokenSet.create(STRING)
+        val LITERALS = TokenSet.create(STRING, INT, HEX)
         val IDENTS = TokenSet.create(TID, SPID, CID, ID)
         val ARROWS = TokenSet.create(ARROW, TARROW)
         val KEYWORDS = TokenSet.create(FORALL, BUILTIN, LIBRARY, IMPORT, LET, IN, MATCH, WITH, END, FUN,

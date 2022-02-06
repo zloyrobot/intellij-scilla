@@ -9,9 +9,7 @@ import com.intellij.openapi.util.Iconable
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.stubs.StubIndex
 import com.intellij.psi.stubs.StubIndexKey
-import com.zloyrobot.scilla.lang.ScillaContractLibraryAndTypeIndex
-import com.zloyrobot.scilla.lang.ScillaNavigatableElement
-import com.zloyrobot.scilla.lang.ScillaSymbolIndex
+import com.zloyrobot.scilla.lang.*
 import javax.swing.Icon
 
 abstract class ScillaGotoContributor(private val key: StubIndexKey<String, ScillaNavigatableElement>) 
@@ -34,7 +32,13 @@ abstract class ScillaGotoContributor(private val key: StubIndexKey<String, Scill
 		return StubIndex.getElements(key, name, project, scope, ScillaNavigatableElement::class.java).toTypedArray()
 	}
 
-	override fun getQualifiedName(item: NavigationItem?): String? = (item as? ScillaNavigatableElement)?.qualifiedName
+	override fun getQualifiedName(item: NavigationItem?): String? {
+		return when(item) {
+			is ScillaLibraryEntry<*, *> -> item.qualifiedName
+			is ScillaContractEntry<*, *> -> item.qualifiedName
+			else -> item?.name
+		}
+	}
 
 	override fun getQualifiedNameSeparator(): String = "."
 }

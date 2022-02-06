@@ -5,7 +5,7 @@ import com.intellij.openapi.fileTypes.LanguageFileType
 import com.intellij.openapi.vfs.VirtualFile
 import java.nio.charset.StandardCharsets
 
-object   ScillaLanguage : Language("Scilla")
+object ScillaLanguage : Language("Scilla")
 
 
 object ScillaFileType : LanguageFileType(ScillaLanguage) {

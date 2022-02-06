@@ -1,47 +1,84 @@
 package com.zloyrobot.scilla.ide
 
+import com.intellij.application.options.CodeStyleAbstractPanel
 import com.intellij.lexer.Lexer
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors
 import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.fileTypes.SyntaxHighlighter
 import com.intellij.openapi.fileTypes.SyntaxHighlighterBase
 import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory
+import com.intellij.openapi.options.colors.AttributesDescriptor
+import com.intellij.openapi.options.colors.ColorDescriptor
+import com.intellij.openapi.options.colors.ColorSettingsPage
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.StringEscapesTokenTypes
 import com.intellij.psi.tree.IElementType
+import com.zloyrobot.scilla.lang.ScillaFileType
+import com.zloyrobot.scilla.lang.ScillaLanguage
 import com.zloyrobot.scilla.lang.ScillaLexer
 import com.zloyrobot.scilla.lang.ScillaTokenType
 
-object ScillaTextAttributeKeys {
-    val COMMENT = key("Scilla.COMMENT", DefaultLanguageHighlighterColors.DOC_COMMENT)
-    val STRING = key("Scilla.STRING", DefaultLanguageHighlighterColors.STRING)
-    val INT = key("Scilla.INT", DefaultLanguageHighlighterColors.NUMBER)
-    val HEX = key("Scilla.INT", DefaultLanguageHighlighterColors.NUMBER)
-    val KEYWORD = key("Scilla.KEYWORD", DefaultLanguageHighlighterColors.KEYWORD)
+enum class ScillaTextAttributeKeys(humanName: String, fallback: TextAttributesKey) {
+    COMMENT("Comment", DefaultLanguageHighlighterColors.DOC_COMMENT),
+    STRING("String//String text", DefaultLanguageHighlighterColors.STRING),
+    INT("Number//Decimal", DefaultLanguageHighlighterColors.NUMBER),
+    HEX("Number//Hexadecimal", DefaultLanguageHighlighterColors.NUMBER),
+    KEYWORD("Keyword", DefaultLanguageHighlighterColors.KEYWORD),
 
-    val DOT = key("Scilla.DOT", DefaultLanguageHighlighterColors.DOT)
-    val COMMA = key("Scilla.COMMA", DefaultLanguageHighlighterColors.COMMA)
-    val SEMICOLON = key("Scilla.SEMICOLON", DefaultLanguageHighlighterColors.SEMICOLON)
+    DOT("Braces and Operators//Dot", DefaultLanguageHighlighterColors.DOT),
+    COMMA("Braces and Operators//Comma", DefaultLanguageHighlighterColors.COMMA),
+    SEMICOLON("Braces and Operators//Semicolon", DefaultLanguageHighlighterColors.SEMICOLON),
 
-    val PARENTHESES = key("Scilla.PARENTHESES", DefaultLanguageHighlighterColors.PARENTHESES)
-    val BRACKETS = key("Scilla.BRACKETS", DefaultLanguageHighlighterColors.BRACKETS)
-    val BRACES = key("Scilla.BRACES", DefaultLanguageHighlighterColors.BRACES)
+    PARENTHESES("Braces and Operators//Parentheses", DefaultLanguageHighlighterColors.PARENTHESES),
+    BRACKETS("Braces and Operators//Brackets", DefaultLanguageHighlighterColors.BRACKETS),
+    BRACES("Braces and Operators//Braces", DefaultLanguageHighlighterColors.BRACES),
 
-    val COLON = key("Scilla.COLON", DefaultLanguageHighlighterColors.DOT)
-    val ARROW = key("Scilla.ARROW", DefaultLanguageHighlighterColors.DOT)
-    val TARROW = key("Scilla.TARROW", DefaultLanguageHighlighterColors.DOT)
-    val EQ = key("Scilla.EQ", DefaultLanguageHighlighterColors.DOT)
-    val AMP = key("Scilla.AND", DefaultLanguageHighlighterColors.DOT)
-    val FETCH = key("Scilla.FETCH", DefaultLanguageHighlighterColors.DOT)
-    val ASSIGN = key("Scilla.ASSIGN", DefaultLanguageHighlighterColors.DOT)
-    val AT = key("Scilla.AT", DefaultLanguageHighlighterColors.DOT)
+    COLON("Braces and Operators//Colon", DefaultLanguageHighlighterColors.DOT),
+    ARROW("Braces and Operators//Arrow", DefaultLanguageHighlighterColors.DOT),
+    TARROW("Braces and Operators//Type Arrow", DefaultLanguageHighlighterColors.DOT),
+    EQ("Braces and Operators//Equal Sign", DefaultLanguageHighlighterColors.DOT),
+    AMP("Braces and Operators//Ampersand", DefaultLanguageHighlighterColors.DOT),
+    FETCH("Braces and Operators//Fetch", DefaultLanguageHighlighterColors.DOT),
+    ASSIGN("Braces and Operators//Assign", DefaultLanguageHighlighterColors.DOT),
+    AT("Braces and Operators//At", DefaultLanguageHighlighterColors.DOT),
 
-    val VALID_STRING_ESCAPE = key("Scilla.VALID_STRING_ESCAPE", DefaultLanguageHighlighterColors.VALID_STRING_ESCAPE)
-    val INVALID_STRING_ESCAPE = key("Scilla.INVALID_STRING_ESCAPE", DefaultLanguageHighlighterColors.INVALID_STRING_ESCAPE)
+    VALID_STRING_ESCAPE("String//Escape Sequence//Valid", DefaultLanguageHighlighterColors.VALID_STRING_ESCAPE),
+    INVALID_STRING_ESCAPE("String//Escape Sequence//Invalid", DefaultLanguageHighlighterColors.INVALID_STRING_ESCAPE),
 
-    private fun key(name: String, fallback: TextAttributesKey) = TextAttributesKey.createTextAttributesKey(name, fallback)
+	BUILTIN_TYPE("Types//Builtin Type", DefaultLanguageHighlighterColors.PREDEFINED_SYMBOL),
+	BUILTIN_TYPE_CONSTRUCTOR("Types//Builtin Type Constructor", DefaultLanguageHighlighterColors.GLOBAL_VARIABLE),
+	USER_TYPE("Types//Library User Type", DefaultLanguageHighlighterColors.CONSTANT),
+	USER_TYPE_CONSTRUCTOR("Types//Library User Type Constructor", DefaultLanguageHighlighterColors.GLOBAL_VARIABLE),
+	TYPE_VAR("Types//Type Parameter", DefaultLanguageHighlighterColors.PARAMETER),
+	
+	LIBRARY("Library", DefaultLanguageHighlighterColors.IDENTIFIER),
+	CONTRACT("Contract", DefaultLanguageHighlighterColors.IDENTIFIER),
+	LIBRARY_LET_BINDING("Library Named Value", DefaultLanguageHighlighterColors.GLOBAL_VARIABLE),
+	LOCAL_LET_BINDING("Local Named Value", DefaultLanguageHighlighterColors.LOCAL_VARIABLE),
+	PROCEDURE_DECLARATION("Procedure Declaration", DefaultLanguageHighlighterColors.FUNCTION_DECLARATION),
+	PROCEDURE_CALL("Procedure Call", DefaultLanguageHighlighterColors.FUNCTION_CALL),
+	FIELD("Contract Field", DefaultLanguageHighlighterColors.INSTANCE_FIELD);
+	
+	val key = TextAttributesKey.createTextAttributesKey("Scilla.$name", fallback)
+    val descriptor = AttributesDescriptor(humanName, key)
 }
+
+class ScillaColorSettingsPage : ColorSettingsPage {
+	override fun getDisplayName() = ScillaLanguage.displayName
+	override fun getIcon() = ScillaFileType.icon
+	override fun getAttributeDescriptors() = ScillaTextAttributeKeys.values().map { it.descriptor }.toTypedArray()
+	override fun getColorDescriptors(): Array<ColorDescriptor> = ColorDescriptor.EMPTY_ARRAY
+	override fun getHighlighter() = ScillaSyntaxHighlighter()
+	
+	override fun getAdditionalHighlightingTagToDescriptorMap(): Map<String, TextAttributesKey> {
+		return ScillaTextAttributeKeys.values().associateBy({ it.name }, { it.key })
+	}
+
+	private val DEMO_TEXT = CodeStyleAbstractPanel.readFromFile(ScillaLanguage::class.java, "Sample.scilla")
+	override fun getDemoText(): String = DEMO_TEXT
+}
+
 
 class ScillaSyntaxHighlighter : SyntaxHighlighterBase() {
     companion object {
@@ -49,39 +86,39 @@ class ScillaSyntaxHighlighter : SyntaxHighlighterBase() {
 
         init
         {
-            fillMap(keys1, ScillaTokenType.KEYWORDS, ScillaTextAttributeKeys.KEYWORD)
+            fillMap(keys1, ScillaTokenType.KEYWORDS, ScillaTextAttributeKeys.KEYWORD.key)
 
-            keys1[StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN] = ScillaTextAttributeKeys.VALID_STRING_ESCAPE
-            keys1[StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN] = ScillaTextAttributeKeys.INVALID_STRING_ESCAPE
-            keys1[StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN] = ScillaTextAttributeKeys.INVALID_STRING_ESCAPE
+            keys1[StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN] = ScillaTextAttributeKeys.VALID_STRING_ESCAPE.key
+            keys1[StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN] = ScillaTextAttributeKeys.INVALID_STRING_ESCAPE.key
+            keys1[StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN] = ScillaTextAttributeKeys.INVALID_STRING_ESCAPE.key
 
-            keys1[ScillaTokenType.INT] = ScillaTextAttributeKeys.INT
-            keys1[ScillaTokenType.HEX] = ScillaTextAttributeKeys.HEX
-            keys1[ScillaTokenType.STRING] = ScillaTextAttributeKeys.STRING
+            keys1[ScillaTokenType.INT] = ScillaTextAttributeKeys.INT.key
+            keys1[ScillaTokenType.HEX] = ScillaTextAttributeKeys.HEX.key
+            keys1[ScillaTokenType.STRING] = ScillaTextAttributeKeys.STRING.key
 
-            keys1[ScillaTokenType.COMMENT] = ScillaTextAttributeKeys.COMMENT
+            keys1[ScillaTokenType.COMMENT] = ScillaTextAttributeKeys.COMMENT.key
 
-            keys1[ScillaTokenType.LPAREN] = ScillaTextAttributeKeys.PARENTHESES
-            keys1[ScillaTokenType.RPAREN] = ScillaTextAttributeKeys.PARENTHESES
+            keys1[ScillaTokenType.LPAREN] = ScillaTextAttributeKeys.PARENTHESES.key
+            keys1[ScillaTokenType.RPAREN] = ScillaTextAttributeKeys.PARENTHESES.key
 
-            keys1[ScillaTokenType.LBRACE] = ScillaTextAttributeKeys.BRACES
-            keys1[ScillaTokenType.RBRACE] = ScillaTextAttributeKeys.BRACES
+            keys1[ScillaTokenType.LBRACE] = ScillaTextAttributeKeys.BRACES.key
+            keys1[ScillaTokenType.RBRACE] = ScillaTextAttributeKeys.BRACES.key
 
-            keys1[ScillaTokenType.LBRACKET] = ScillaTextAttributeKeys.BRACKETS
-            keys1[ScillaTokenType.RBRACKET] = ScillaTextAttributeKeys.BRACKETS
+            keys1[ScillaTokenType.LBRACKET] = ScillaTextAttributeKeys.BRACKETS.key
+            keys1[ScillaTokenType.RBRACKET] = ScillaTextAttributeKeys.BRACKETS.key
 
-            keys1[ScillaTokenType.COMMA] = ScillaTextAttributeKeys.COMMA
-            keys1[ScillaTokenType.DOT] = ScillaTextAttributeKeys.DOT
-            keys1[ScillaTokenType.SEMICOLON] = ScillaTextAttributeKeys.SEMICOLON
+            keys1[ScillaTokenType.COMMA] = ScillaTextAttributeKeys.COMMA.key
+            keys1[ScillaTokenType.DOT] = ScillaTextAttributeKeys.DOT.key
+            keys1[ScillaTokenType.SEMICOLON] = ScillaTextAttributeKeys.SEMICOLON.key
 
-            keys1[ScillaTokenType.COLON] = ScillaTextAttributeKeys.COLON
-            keys1[ScillaTokenType.ARROW] = ScillaTextAttributeKeys.ARROW
-            keys1[ScillaTokenType.TARROW] = ScillaTextAttributeKeys.TARROW
-            keys1[ScillaTokenType.EQ] = ScillaTextAttributeKeys.EQ
-            keys1[ScillaTokenType.AMP] = ScillaTextAttributeKeys.AMP
-            keys1[ScillaTokenType.FETCH] = ScillaTextAttributeKeys.FETCH
-            keys1[ScillaTokenType.ASSIGN] = ScillaTextAttributeKeys.ASSIGN
-            keys1[ScillaTokenType.AT] = ScillaTextAttributeKeys.AT
+            keys1[ScillaTokenType.COLON] = ScillaTextAttributeKeys.COLON.key
+            keys1[ScillaTokenType.ARROW] = ScillaTextAttributeKeys.ARROW.key
+            keys1[ScillaTokenType.TARROW] = ScillaTextAttributeKeys.TARROW.key
+            keys1[ScillaTokenType.EQ] = ScillaTextAttributeKeys.EQ.key
+            keys1[ScillaTokenType.AMP] = ScillaTextAttributeKeys.AMP.key
+            keys1[ScillaTokenType.FETCH] = ScillaTextAttributeKeys.FETCH.key
+            keys1[ScillaTokenType.ASSIGN] = ScillaTextAttributeKeys.ASSIGN.key
+            keys1[ScillaTokenType.AT] = ScillaTextAttributeKeys.AT.key
         }
     }
 

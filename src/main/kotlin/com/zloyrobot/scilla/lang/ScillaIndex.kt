@@ -21,3 +21,13 @@ class ScillaContractLibraryAndTypeIndex : StringStubIndexExtension<ScillaNavigat
 	override fun getVersion(): Int = ScillaElementType.SCILLA_CONTRACT_STUB_FILE.stubVersion
 	override fun getKey(): StubIndexKey<String, ScillaNavigatableElement> = KEY
 }
+
+
+class ScillaLibraryIndex : StringStubIndexExtension<ScillaLibrary>() {
+	companion object {
+		val KEY: StubIndexKey<String, ScillaLibrary> = StubIndexKey.createIndexKey("SCILLA_LIBRARY_INDEX")
+	}
+
+	override fun getVersion(): Int = ScillaElementType.SCILLA_CONTRACT_STUB_FILE.stubVersion
+	override fun getKey(): StubIndexKey<String, ScillaLibrary> = KEY
+}

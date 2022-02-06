@@ -50,8 +50,10 @@ class ScillaElementType(@NonNls debugName: String) : IElementType(debugName, Sci
         val PAREN_PATTERN = ScillaElementType("PAREN_EXPRESSION")
         val PATTERN_MATCH_CLAUSE = ScillaElementType("PATTERN_MATCH_CLAUSE")
 
+		val PATTERNS = TokenSet.create(WILDCARD_PATTERN, BINDER_PATTERN, CONSTRUCTOR_PATTERN, PAREN_PATTERN)
+
         val LITERAL_EXPRESSION = ScillaElementType("LITERAL_EXPRESSION")
-        val VAR_EXPRESSION = ScillaElementType("VAR_EXPRESSION")
+        val REF_EXPRESSION = ScillaElementType("VAR_EXPRESSION")
         val LET_EXPRESSION = ScillaElementType("LET_EXPRESSION")
         val MESSAGE_EXPRESSION = ScillaElementType("MESSAGE_EXPRESSION")
         val MESSAGE_ENTRY = ScillaElementType("MESSAGE_ENTRY")
@@ -63,70 +65,77 @@ class ScillaElementType(@NonNls debugName: String) : IElementType(debugName, Sci
         val BUILTIN_EXPRESSION = ScillaElementType("BUILTIN_EXPRESSION")
         val TYPE_FUN_EXPRESSION = ScillaElementType("TYPE_FUN_EXPRESSION")
         val TYPE_APP_EXPRESSION = ScillaElementType("TYPE_APP_EXPRESSION")
-        val FIXPOINT_EXPRESSION = ScillaElementType("FIXPOINT_EXPRESSION")
-        val GAS_EXPRESSION = ScillaElementType("GAS_EXPRESSION")
 		
 		val FUN_EXPRESSIONS = TokenSet.create(FUN_EXPRESSION, TYPE_FUN_EXPRESSION) 
-		val EXPRESSIONS = TokenSet.create(LITERAL_EXPRESSION, VAR_EXPRESSION, LET_EXPRESSION, MESSAGE_EXPRESSION,
+		val EXPRESSIONS = TokenSet.create(LITERAL_EXPRESSION, REF_EXPRESSION, LET_EXPRESSION, MESSAGE_EXPRESSION,
 		 MESSAGE_ENTRY, FUN_EXPRESSION, APP_EXPRESSION, CONSTR_EXPRESSION, MATCH_EXPRESSION, BUILTIN_EXPRESSION,
-		 TYPE_FUN_EXPRESSION, TYPE_APP_EXPRESSION, FIXPOINT_EXPRESSION, GAS_EXPRESSION)
+		 TYPE_FUN_EXPRESSION, TYPE_APP_EXPRESSION)
 
 
         val STATEMENT_LIST = ScillaElementType("STATEMENT_LIST")
-        val FORALL_STATEMENT = ScillaElementType("FORALL_STATEMENT")
-        val ACCEPT_STATEMENT = ScillaElementType("ACCEPT_STATEMENT")
-        val EVENT_STATEMENT = ScillaElementType("EVENT_STATEMENT")
-        val MATCH_STATEMENT = ScillaElementType("MATCH_STATEMENT")
-        val THROW_STATEMENT = ScillaElementType("THROW_STATEMENT")
-        val SEND_STATEMENT = ScillaElementType("SEND_STATEMENT")
-        val DELETE_STATEMENT = ScillaElementType("DELETE_STATEMENT")
-        val FETCH_STATEMENT = ScillaElementType("FETCH_STATEMENT")
-        val LOCAL_BINDING_STATEMENT = ScillaElementType("LOCAL_BINDING_STATEMENT")
-        val ASSIGN_STATEMENT = ScillaElementType("ASSIGN_STATEMENT")
-        val CALL_STATEMENT = ScillaElementType("CALL_STATEMENT")
+		
+        val LOAD_STATEMENT = ScillaElementType("LOAD_STATEMENT")
+        val REMOTE_LOAD_STATEMENT = ScillaElementType("REMOTE_LOAD_STATEMENT")
+        val STORE_STATEMENT = ScillaElementType("STORE_STATEMENT")
+        val BIND_STATEMENT = ScillaElementType("BIND_STATEMENT")
+        val MAP_UPDATE_STATEMENT = ScillaElementType("MAP_UPDATE_STATEMENT")
+		val MAP_DELETE_STATEMENT = ScillaElementType("DELETE_STATEMENT")
+        val MAP_GET_STATEMENT = ScillaElementType("MAP_GET_STATEMENT")
+        val REMOTE_MAP_GET_STATEMENT = ScillaElementType("REMOTE_MAP_GET_STATEMENT")
+		val MATCH_STATEMENT = ScillaElementType("MATCH_STATEMENT")
+		val READ_FROM_BC_STATEMENT = ScillaElementType("READ_FROM_BC_STATEMENT")
+		val TYPE_CAST_STATEMENT = ScillaElementType("TYPE_CAST_STATEMENT")
+		val ACCEPT_STATEMENT = ScillaElementType("ACCEPT_STATEMENT")
+		val ITERATE_STATEMENT = ScillaElementType("ITERATE_STATEMENT")
+		val SEND_STATEMENT = ScillaElementType("SEND_STATEMENT")
+		val EVENT_STATEMENT = ScillaElementType("EVENT_STATEMENT")
+		val CALL_STATEMENT = ScillaElementType("CALL_STATEMENT")
+		val THROW_STATEMENT = ScillaElementType("THROW_STATEMENT")
 
-		val STATEMENTS = TokenSet.create(FORALL_STATEMENT, ACCEPT_STATEMENT, EVENT_STATEMENT, MATCH_STATEMENT,
-			THROW_STATEMENT, SEND_STATEMENT, DELETE_STATEMENT, FETCH_STATEMENT, LOCAL_BINDING_STATEMENT, 
-			ASSIGN_STATEMENT, CALL_STATEMENT)
+		val STATEMENTS = TokenSet.create(LOAD_STATEMENT, REMOTE_LOAD_STATEMENT, STORE_STATEMENT, BIND_STATEMENT,  
+			MAP_UPDATE_STATEMENT, MAP_DELETE_STATEMENT, MAP_GET_STATEMENT, REMOTE_MAP_GET_STATEMENT, MATCH_STATEMENT,
+			READ_FROM_BC_STATEMENT, TYPE_CAST_STATEMENT, ACCEPT_STATEMENT,ITERATE_STATEMENT, SEND_STATEMENT,
+			EVENT_STATEMENT, CALL_STATEMENT, THROW_STATEMENT)
 
         val CONTRACT_DEFINITION = ScillaContractStubElementType("CONTRACT_DEFINITION")
         val CONTRACT_CONSTRAINT = ScillaElementType("CONTRACT_CONSTRAINT")
         val ID_WITH_TYPE = ScillaElementType("ID_WITH_TYPE")
         val FIELD_DEFINITION = ScillaFieldStubElementType("FIELD_DEFINITION")
+        val FIELD_REF = ScillaElementType("FIELD_REF")
         val TRANSITION_DEFINITION = ScillaTransitionStubElementType("TRANSITION_DEFINITION")
         val PROCEDURE_DEFINITION = ScillaProcedureStubElementType("PROCEDURE_DEFINITION")
 
         val LIBRARY_DEFINITION = ScillaLibraryStubElementType("LIBRARY")
         val LIBRARY_LET_DEFINITION = ScillaLibraryLetStubElementType("LIBRARY_LET_DEFINITION")
         val LIBRARY_TYPE_DEFINITION = ScillaLibraryTypeStubElementType("LIBRARY_TYPE_DEFINITION")
-        val LIBRARY_TYPE_CONSTRUCTOR = ScillaElementType("LIBRARY_TYPE_CONSTRUCTOR")
+        val LIBRARY_TYPE_CONSTRUCTOR = ScillaLibraryTypeConstructorStubElementType("LIBRARY_TYPE_CONSTRUCTOR")
 		
 		val LIBRARY_ENTRIES = TokenSet.create(LIBRARY_LET_DEFINITION, LIBRARY_TYPE_DEFINITION)
 
         val SCILLA_VERSION = ScillaElementType("SCILLA_VERSION")
-        val IMPORTS = ScillaElementType("IMPORTS")
-        val IMPORT_NAME = ScillaElementType("IMPORT_NAME")
+        val IMPORTS = ScillaImportsStubElementType("IMPORTS")
+        val IMPORT_ENTRY = ScillaImportStubElementType("IMPORT")
 
         val GARBAGE_AT_THE_END_OF_FILE = ScillaElementType("GARBAGE_AT_THE_END_OF_FILE")
 
         fun createElement(node: ASTNode): PsiElement {
             return when (node.elementType) {
-                SIMPLE_REF -> ScillaSimpleRef(node)
-                QUALIFIED_REF -> ScillaQualifiedRef(node)
-                HEX_QUALIFIED_REF -> ScillaHexQualifiedRef(node)
+                SIMPLE_REF -> ScillaSimpleName(node)
+                QUALIFIED_REF -> ScillaQualifiedName(node)
+                HEX_QUALIFIED_REF -> ScillaHexQualifiedName(node)
 
                 MAP_KEY -> ScillaMapKey(node)
                 MAP_VALUE -> ScillaMapValue(node)
                 MAP_ACCESS -> ScillaMapAccess(node)
 
-                REF_TYPE -> ScillaRefType(node)
-                MAP_TYPE -> ScillaMapType(node)
-                FUN_TYPE -> ScillaFunType(node)
-                POLY_TYPE -> ScillaPolyType(node)
-                ADDRESS_TYPE -> ScillaAddressType(node)
+                REF_TYPE -> ScillaRefTypeElement(node)
+                MAP_TYPE -> ScillaMapTypeElement(node)
+                FUN_TYPE -> ScillaFunTypeElement(node)
+                POLY_TYPE -> ScillaPolyTypeElement(node)
+                ADDRESS_TYPE -> ScillaAddressTypeElement(node)
                 ADDRESS_TYPE_FIELD -> ScillaAddressTypeField(node)
-                TYPE_VAR_TYPE -> ScillaTypeVarType(node)
-                PAREN_TYPE -> ScillaParenType(node)
+                TYPE_VAR_TYPE -> ScillaTypeVarTypeElement(node)
+                PAREN_TYPE -> ScillaParenTypeElement(node)
 
                 ID_WITH_TYPE -> ScillaIdWithType(node)
 				CONTRACT_PARAMETERS -> ScillaContractParameters(node)
@@ -141,37 +150,43 @@ class ScillaElementType(@NonNls debugName: String) : IElementType(debugName, Sci
                 PATTERN_MATCH_CLAUSE -> ScillaPatternMatchClause(node)
 
                 LITERAL_EXPRESSION -> ScillaLiteralExpression(node)
-                VAR_EXPRESSION -> ScillaVarExpression(node)
+                REF_EXPRESSION -> ScillaRefExpression(node)
                 LET_EXPRESSION -> ScillaLetExpression(node)
                 MESSAGE_EXPRESSION -> ScillaMessageExpression(node)
                 MESSAGE_ENTRY -> ScillaMessageEntry(node)
                 MESSAGE_ENTRY_VALUE -> ScillaMessageEntryValue(node)
                 FUN_EXPRESSION -> ScillaFunExpression(node)
                 APP_EXPRESSION -> ScillaAppExpression(node)
-                CONSTR_EXPRESSION -> ScillaConstrExpression(node)
+                CONSTR_EXPRESSION -> ScillaConstructorExpression(node)
                 MATCH_EXPRESSION -> ScillaMatchExpression(node)
                 BUILTIN_EXPRESSION -> ScillaBuiltinExpression(node)
                 TYPE_FUN_EXPRESSION -> ScillaTFunExpression(node)
                 TYPE_APP_EXPRESSION -> ScillaTAppExpression(node)
-                FIXPOINT_EXPRESSION -> ScillaFixpointExpression(node)
-                GAS_EXPRESSION -> ScillaGasExpression(node)
 
                 STATEMENT_LIST -> ScillaStatementList(node)
-                FORALL_STATEMENT -> ScillaForallStatement(node)
-                ACCEPT_STATEMENT -> ScillaAcceptStatement(node)
+				LOAD_STATEMENT -> ScillaLoadStatement(node)
+				REMOTE_LOAD_STATEMENT -> ScillaLoadStatement(node)
+				STORE_STATEMENT -> ScillaStoreStatement(node)
+				BIND_STATEMENT -> ScillaBindStatement(node)
+				MAP_UPDATE_STATEMENT -> ScillaMapUpdateStatement(node)
+				MAP_DELETE_STATEMENT -> ScillaMapDeleteStatement(node)
+				MAP_GET_STATEMENT -> ScillaMapGetStatement(node)
+				REMOTE_MAP_GET_STATEMENT -> ScillaMapGetStatement(node)
+				MATCH_STATEMENT -> ScillaMatchStatement(node)
+				READ_FROM_BC_STATEMENT -> ScillaReadFromBCStatement(node)
+				TYPE_CAST_STATEMENT -> ScillaTypeCastStatement(node)
+				ACCEPT_STATEMENT -> ScillaAcceptStatement(node)
+				ITERATE_STATEMENT -> ScillaIterateStatement(node)
+				SEND_STATEMENT -> ScillaSendStatement(node)
                 EVENT_STATEMENT -> ScillaEventStatement(node)
-                MATCH_STATEMENT -> ScillaMatchStatement(node)
-                THROW_STATEMENT -> ScillaThrowStatement(node)
-                SEND_STATEMENT -> ScillaSendStatement(node)
-                DELETE_STATEMENT -> ScillaDeleteStatement(node)
-                FETCH_STATEMENT -> ScillaFetchStatement(node)
-                LOCAL_BINDING_STATEMENT -> ScillaLocalBindingStatement(node)
-                ASSIGN_STATEMENT -> ScillaAssignStatement(node)
                 CALL_STATEMENT -> ScillaCallStatement(node)
+                THROW_STATEMENT -> ScillaThrowStatement(node)
+				
 
                 CONTRACT_DEFINITION -> ScillaContract(node)
                 CONTRACT_CONSTRAINT -> ScillaContractConstraint(node)
-                FIELD_DEFINITION -> ScillaField(node)
+                FIELD_DEFINITION -> ScillaUserField(node)
+				FIELD_REF -> ScillaFieldRefElement(node)
                 TRANSITION_DEFINITION -> ScillaTransition(node)
                 PROCEDURE_DEFINITION -> ScillaProcedure(node)
 
@@ -182,7 +197,7 @@ class ScillaElementType(@NonNls debugName: String) : IElementType(debugName, Sci
 
                 SCILLA_VERSION -> ScillaVersion(node)
                 IMPORTS ->  ScillaImports(node)
-                IMPORT_NAME ->  ScillaImportName(node)
+                IMPORT_ENTRY ->  ScillaImport(node)
 
                 GARBAGE_AT_THE_END_OF_FILE -> ScillaGarbageAtTheEndOfFile(node)
 
