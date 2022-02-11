@@ -15,19 +15,38 @@ class ScillaStatementList(node: ASTNode) : ScillaPsiElement(node) {
 	val statements : List<ScillaStatement> get() = findChildrenByType(ScillaElementType.STATEMENTS)
 }
 
-class ScillaBindStatement(node: ASTNode) : ScillaVarBindingStatement(node)
+class ScillaBindStatement(node: ASTNode) : ScillaVarBindingStatement(node) {
+	override fun calculateOwnType(): ScillaType {
+		TODO("Not yet implemented")
+	}
+}
 
 class ScillaLoadStatement(node: ASTNode) : ScillaVarBindingStatement(node) {
 	val address: PsiElement? get() = findChildByType(ScillaTokenType.DOT)
 	val isRemote: Boolean get() = address != null
+	override fun calculateOwnType(): ScillaType {
+		TODO("Not yet implemented")
+	}
 }
 
 class ScillaMapGetStatement(node: ASTNode) : ScillaVarBindingStatement(node) {
 	val address: PsiElement? get() = findChildByType(ScillaTokenType.DOT)
 	val isRemote: Boolean get() = address != null
+	override fun calculateOwnType(): ScillaType {
+		TODO("Not yet implemented")
+	}
 }
-class ScillaReadFromBCStatement(node: ASTNode) : ScillaVarBindingStatement(node)
-class ScillaTypeCastStatement(node: ASTNode) : ScillaVarBindingStatement(node)
+class ScillaReadFromBCStatement(node: ASTNode) : ScillaVarBindingStatement(node) {
+	override fun calculateOwnType(): ScillaType {
+		TODO("Not yet implemented")
+	}
+}
+
+class ScillaTypeCastStatement(node: ASTNode) : ScillaVarBindingStatement(node) {
+	override fun calculateOwnType(): ScillaType {
+		TODO("Not yet implemented")
+	}
+}
 
 class ScillaIterateStatement(node: ASTNode) : ScillaPsiElement(node), ScillaStatement
 class ScillaAcceptStatement(node: ASTNode) : ScillaPsiElement(node), ScillaStatement
@@ -53,7 +72,7 @@ class ScillaCallStatement(node: ASTNode) : ScillaNamedPsiElement(node), ScillaSt
 
 class ScillaMatchStatement(node: ASTNode) : ScillaNamedPsiElement(node), ScillaStatement, ScillaMatchElement {
 	override val matchKeyword: PsiElement get() = findChildByType(ScillaTokenType.MATCH)!!
-	override val subject: ScillaName? get() = findChildByType(ScillaElementType.REFS)
+	override val subject: ScillaExpression? get() = findChildByType(ScillaElementType.EXPRESSIONS)
 	override val withKeyword: PsiElement? get() = findChildByType(ScillaTokenType.WITH)
 	override val endKeyword: PsiElement? get() = findChildByType(ScillaTokenType.END)
 }

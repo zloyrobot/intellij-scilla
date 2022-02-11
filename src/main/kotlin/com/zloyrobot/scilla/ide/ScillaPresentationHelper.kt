@@ -14,15 +14,19 @@ class ScillaIconProvider : IconProvider() {
 			is ScillaFile -> PlainTextFileType.INSTANCE.icon
 			is ScillaLibrary -> AllIcons.Nodes.PpLib
 			is ScillaLibraryType -> AllIcons.Nodes.Type
+			is ScillaTypeVarBindingElement -> AllIcons.Nodes.Type
 			is ScillaContract -> AllIcons.Nodes.Class
 			is ScillaUserField -> AllIcons.Nodes.Field
 			is ScillaTransition -> AllIcons.Nodes.Test
 			is ScillaProcedure -> AllIcons.Nodes.Property
-			is ScillaLibraryLet ->
-				when (element.expression) {
-					is ScillaFunExpression, is ScillaTFunExpression -> AllIcons.Nodes.Function
-					else -> AllIcons.Nodes.Constant
-				}
+			
+			is ScillaVarBindingElement -> {
+				if (element.ownType is ScillaFunType || element.ownType is ScillaPolyFunType) 
+					AllIcons.Nodes.Function
+				else 
+					AllIcons.Nodes.Constant
+			}
+			
 			else -> null
 		}
 	}

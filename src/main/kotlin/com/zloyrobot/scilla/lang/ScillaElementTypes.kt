@@ -49,6 +49,7 @@ class ScillaElementType(@NonNls debugName: String) : IElementType(debugName, Sci
         val CONSTRUCTOR_PATTERN = ScillaElementType("LITERAL_EXPRESSION")
         val PAREN_PATTERN = ScillaElementType("PAREN_EXPRESSION")
         val PATTERN_MATCH_CLAUSE = ScillaElementType("PATTERN_MATCH_CLAUSE")
+        val EXPRESSION_PATTERN_MATCH_CLAUSE = ScillaElementType("EXPRESSION_PATTERN_MATCH_CLAUSE")
 
 		val PATTERNS = TokenSet.create(WILDCARD_PATTERN, BINDER_PATTERN, CONSTRUCTOR_PATTERN, PAREN_PATTERN)
 
@@ -57,7 +58,6 @@ class ScillaElementType(@NonNls debugName: String) : IElementType(debugName, Sci
         val LET_EXPRESSION = ScillaElementType("LET_EXPRESSION")
         val MESSAGE_EXPRESSION = ScillaElementType("MESSAGE_EXPRESSION")
         val MESSAGE_ENTRY = ScillaElementType("MESSAGE_ENTRY")
-        val MESSAGE_ENTRY_VALUE = ScillaElementType("MESSAGE_ENTRY_VALUE")
         val FUN_EXPRESSION = ScillaElementType("FUN_EXPRESSION")
         val APP_EXPRESSION = ScillaElementType("APP_EXPRESSION")
         val CONSTR_EXPRESSION = ScillaElementType("CONSTR_EXPRESSION")
@@ -147,14 +147,14 @@ class ScillaElementType(@NonNls debugName: String) : IElementType(debugName, Sci
                 BINDER_PATTERN -> ScillaBinderPattern(node)
                 CONSTRUCTOR_PATTERN -> ScillaConstructorPattern(node)
                 PAREN_PATTERN -> ScillaParenPattern(node)
-                PATTERN_MATCH_CLAUSE -> ScillaPatternMatchClause(node)
+                PATTERN_MATCH_CLAUSE -> ScillaStatementPatternMatchClause(node)
+                EXPRESSION_PATTERN_MATCH_CLAUSE -> ScillaExpressionPatternMatchClause(node)
 
                 LITERAL_EXPRESSION -> ScillaLiteralExpression(node)
                 REF_EXPRESSION -> ScillaRefExpression(node)
                 LET_EXPRESSION -> ScillaLetExpression(node)
                 MESSAGE_EXPRESSION -> ScillaMessageExpression(node)
                 MESSAGE_ENTRY -> ScillaMessageEntry(node)
-                MESSAGE_ENTRY_VALUE -> ScillaMessageEntryValue(node)
                 FUN_EXPRESSION -> ScillaFunExpression(node)
                 APP_EXPRESSION -> ScillaAppExpression(node)
                 CONSTR_EXPRESSION -> ScillaConstructorExpression(node)

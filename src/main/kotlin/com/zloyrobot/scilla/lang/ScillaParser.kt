@@ -279,9 +279,9 @@ class ScillaParser : PsiParser {
             val mark = builder.mark()
 
             assertAdvance(ScillaTokenType.IMPORT)
-            while (builder.tokenType == ScillaTokenType.CID) {
+            while (builder.tokenType in ScillaTokenType.IDENTS) {
 				val importMark = builder.mark()
-                assertAdvance(ScillaTokenType.CID)
+                expectAdvance(ScillaTokenType.CID, "library name")
                 if (builder.tokenType == ScillaTokenType.AS) {
                     assertAdvance(ScillaTokenType.AS)
                     expectAdvance(ScillaTokenType.CID, "namespace name")
@@ -1023,8 +1023,15 @@ class ScillaParser : PsiParser {
         *   | AddressType
         *   | 'forall' TID '.' Type
         *   | TID
-        */
-        private fun parseType() {
+		*   
+		* TypeArg:
+		*   | '(' Type ')'
+		*   | SCid
+		*   | TID
+		*   | AddressType
+		*   | 'Map' MapKey MapValue
+		*/
+        private fun parseType(typeArg: Boolean = false) {
             val mark = builder.mark()
             when(builder.tokenType) {
                 ScillaTokenType.TID -> {
@@ -1050,7 +1057,7 @@ class ScillaParser : PsiParser {
                     }
                     else {
                         parseSidOrSCid(true, "type")
-                        while (builder.tokenType != null) {
+                        while (!typeArg && builder.tokenType != null) {
                             if (!tryParseTypeArg())
                                 break
                         }
@@ -1059,7 +1066,10 @@ class ScillaParser : PsiParser {
                 }
                 ScillaTokenType.FORALL -> {
                     assertAdvance(ScillaTokenType.FORALL)
-                    if (expectAdvance(ScillaTokenType.TID, "type variable")) {
+					if (typeArg)
+						builder.error("Expected type argument")
+					
+                    else if (expectAdvance(ScillaTokenType.TID, "type variable")) {
                         expectAdvance(ScillaTokenType.DOT, "'.'")
                         parseType()
                     }
@@ -1068,7 +1078,7 @@ class ScillaParser : PsiParser {
                 else -> mark.error("Expected type")
             }
 
-            if (builder.tokenType == ScillaTokenType.TARROW) {
+            if (!typeArg && builder.tokenType == ScillaTokenType.TARROW) {
                 assertAdvance(ScillaTokenType.TARROW)
                 val precede = mark.precede()
                 parseType()
@@ -1090,7 +1100,7 @@ class ScillaParser : PsiParser {
                 ScillaTokenType.MAP,
                 ScillaTokenType.LPAREN,
                 ScillaTokenType.CID -> {
-                    parseType()
+                    parseType(true)
                     return true
                 }
             }
@@ -1403,7 +1413,12 @@ class ScillaParser : PsiParser {
                 else
                     parseExpression()
             }
-            mark.done(ScillaElementType.PATTERN_MATCH_CLAUSE)
+			
+			if (isStatement)
+            	mark.done(ScillaElementType.PATTERN_MATCH_CLAUSE)
+			else
+				mark.done(ScillaElementType.EXPRESSION_PATTERN_MATCH_CLAUSE)
+			
             return true
         }
 
@@ -1478,11 +1493,9 @@ class ScillaParser : PsiParser {
                 parseSidOrSCid(false, "message field")
                 expectAdvance(ScillaTokenType.COLON, "':'")
 				
-				val fieldValueMark = builder.mark()
                 if (!tryParseLiteral()) {
 					parseRefExpression("literal or value $identBeginningWithLowerCaseLetter")
 				}
-				fieldValueMark.done(ScillaElementType.MESSAGE_ENTRY_VALUE)
 				
                 msgMark.done(ScillaElementType.MESSAGE_ENTRY)
             }

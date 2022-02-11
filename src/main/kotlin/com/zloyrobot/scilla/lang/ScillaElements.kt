@@ -6,7 +6,6 @@ import com.intellij.extapi.psi.StubBasedPsiElementBase
 import com.intellij.lang.ASTNode
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.psi.*
-import com.intellij.psi.impl.light.LightElement
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.stubs.IStubElementType
 import com.intellij.psi.stubs.StubBase
@@ -25,6 +24,30 @@ class ScillaFile(viewProvider: FileViewProvider) : PsiFileBase(viewProvider, Sci
 	val imports: ScillaImports? get() = findChildByClass(ScillaImports::class.java)
 	val library: ScillaLibrary? get() = findChildByClass(ScillaLibrary::class.java)
 	val contract: ScillaContract? get() = findChildByClass(ScillaContract::class.java)
+
+
+	private val factory = lazy { ScillaElementFactory(project) }
+	
+	val list_foldl = lazy {
+		val type = factory.value.createType("forall 'A. forall 'B. ('B -> 'A -> 'B) -> 'B -> (List 'A) -> 'B")
+		 ScillaBuiltinValueElement("list_foldl", type, this)
+	}
+	val list_foldr = lazy {
+		val type = factory.value.createType("forall 'A. forall 'B. ('A -> 'B -> 'B) -> 'B -> (List 'A) -> 'B")
+		ScillaBuiltinValueElement("list_foldr", type, this)
+	}
+	val list_foldk = lazy {
+		val type = factory.value.createType("forall 'A. forall 'B. ('B -> 'A -> ('B -> 'B) -> 'B) -> 'B -> (List 'A) -> 'B")
+		ScillaBuiltinValueElement("list_foldk", type, this)
+	}
+	val nat_fold = lazy {
+		val type = factory.value.createType("forall 'T. ('T -> Nat -> 'T) -> 'T -> Nat -> 'T")
+		ScillaBuiltinValueElement("nat_fold", type, this)
+	}
+	val nat_foldk = lazy {
+		val type = factory.value.createType("forall 'T. (T -> Nat -> ('T -> 'T) -> 'T) -> 'T -> Nat -> 'T")
+		ScillaBuiltinValueElement("nat_foldk", type, this)
+	}
 }
 
 abstract class ScillaPsiElement(node: ASTNode) : ASTWrapperPsiElement(node) {
@@ -108,15 +131,29 @@ class ScillaMapKey(node: ASTNode) : ScillaPsiElement(node)
 class ScillaMapValue(node: ASTNode) : ScillaPsiElement(node)
 class ScillaMapAccess(node: ASTNode) : ScillaPsiElement(node)
 
-class ScillaIdWithType(node: ASTNode) : ScillaNamedPsiElement(node)
+class ScillaIdWithType(node: ASTNode) : ScillaNamedPsiElement(node), ScillaTypeOwner {
+	val typeAnnotation: ScillaTypeElement? get() = findChildByType(ScillaElementType.TYPES)
+	
+	override fun calculateOwnType(): ScillaType = typeAnnotation?.ownType ?: ScillaUnknownType
+	
+}
 
-class ScillaPatternMatchClause(node: ASTNode) : ScillaPsiElement(node) {
-	val pattern: ScillaPattern? get() = findChildByType(ScillaElementType.PATTERNS)
+interface ScillaPatternMatchClause : PsiElement {
+	val pattern: ScillaPattern?
+}
+
+class ScillaStatementPatternMatchClause(node: ASTNode) : ScillaPsiElement(node), ScillaPatternMatchClause {
+	override val pattern: ScillaPattern? get() = findChildByType(ScillaElementType.PATTERNS)
+}
+
+class ScillaExpressionPatternMatchClause(node: ASTNode) : ScillaPsiElement(node), ScillaPatternMatchClause {
+	override val pattern: ScillaPattern? get() = findChildByType(ScillaElementType.PATTERNS)
+	val body: ScillaExpression? get() = findChildByType(ScillaElementType.EXPRESSIONS)
 }
 
 interface ScillaMatchElement : PsiElement {
 	val matchKeyword: PsiElement
-	val subject: ScillaName?
+	val subject: ScillaExpression?
 	val withKeyword: PsiElement?
 	val endKeyword: PsiElement?
 }
@@ -145,6 +182,17 @@ class ScillaContract : ScillaNamedStubElement<ScillaContractStub, ScillaContract
 	
 	val fields: List<ScillaUserField> get() = findChildrenByType(ScillaElementType.FIELD_DEFINITION)
 	val procedures: List<ScillaProcedure> get() = findChildrenByType(ScillaElementType.PROCEDURE_DEFINITION)
+
+
+	val _this_address = lazy {
+		ScillaBuiltinValueElement("_this_address", ScillaByStrType.ByStr20, this) 
+	}
+	val _creation_block = lazy {
+		ScillaBuiltinValueElement("_creation_block", ScillaPrimitiveType.BNum, this)
+	}
+	val _scilla_version = lazy {
+		ScillaBuiltinValueElement("_scilla_version", ScillaPrimitiveType.Uint32, this)
+	}
 }
 
 class ScillaContractConstraint(node: ASTNode) : ScillaPsiElement(node)
@@ -168,6 +216,17 @@ abstract class ScillaComponent<S: ScillaNamedStub<P>, P: PsiElement> : ScillaCon
 	override val parameterList: ScillaParameters? get() = findChildByType(ScillaElementType.PARAMETERS)
 	val statementList: ScillaStatementList? get() = findChildByType(ScillaElementType.STATEMENT_LIST)
 	val endKeyword: PsiElement? get() = findChildByType(ScillaTokenType.END)
+
+
+	val _sender = lazy {
+		ScillaBuiltinValueElement("_sender", ScillaAddressType(), this)
+	}
+	val _origin = lazy {
+		ScillaBuiltinValueElement("_origin", ScillaAddressType(), this)
+	}
+	val _amount = lazy {
+		ScillaBuiltinValueElement("_amount", ScillaPrimitiveType.Uint128, this)
+	}
 }
 
 class ScillaTransitionStub(parent: StubElement<*>?, name: String?) :
@@ -210,13 +269,22 @@ abstract class ScillaLibraryEntry<S: ScillaNamedStub<P>, P: PsiElement> : Scilla
 class ScillaLibraryLetStub(parent: StubElement<*>?, name: String?) :
 	ScillaNamedStub<ScillaLibraryLet>(parent, ScillaElementType.LIBRARY_LET_DEFINITION, name)
 
-class ScillaLibraryLet : ScillaLibraryEntry<ScillaLibraryLetStub, ScillaLibraryLet>, ScillaVarBindingElement {
+class ScillaLibraryLet : ScillaLibraryEntry<ScillaLibraryLetStub, ScillaLibraryLet>, ScillaLetElement {
 	constructor(node: ASTNode) : super(node)
 	constructor(stub: ScillaLibraryLetStub) : super(stub)
 	
 	val letKeyword: PsiElement get() = findChildByType(ScillaTokenType.LET)!!
 	val eqToken: PsiElement? get() = findChildByType(ScillaTokenType.EQ)
-	val expression: ScillaExpression? get() = findChildByType(ScillaElementType.EXPRESSIONS)
+
+	override val type: ScillaTypeElement? get() = findChildByType(ScillaElementType.TYPES)
+	override val initializer: ScillaExpression? get() = findChildByType(ScillaElementType.EXPRESSIONS)
+	
+	override fun calculateOwnType(): ScillaType {
+		if (type != null)
+			return type!!.ownType
+		
+		return initializer?.expressionType ?: ScillaUnknownType
+	}
 }
 
 class ScillaLibraryTypeStub(parent: StubElement<*>?, name: String?) :
@@ -229,17 +297,32 @@ class ScillaLibraryType : ScillaLibraryEntry<ScillaLibraryTypeStub, ScillaLibrar
 	val typeKeyword: PsiElement get() = findChildByType(ScillaTokenType.TYPE)!!
 	val eqToken: PsiElement? get() = findChildByType(ScillaTokenType.EQ)
 	val constructors: List<ScillaLibraryTypeConstructor> get() = findChildrenByType(ScillaElementType.LIBRARY_TYPE_CONSTRUCTOR)
+	
+	override fun calculateOwnType(): ScillaType {
+		val constructors = constructors.map {
+			val constructorTypes = it.params.map { it.ownType }.toTypedArray()
+			ScillaTypeConstructor(it.name, *constructorTypes)
+		}.toTypedArray()
+		
+		return ScillaSimpleAlgebraicType(name, *constructors)
+	} 
 }
 
 class ScillaLibraryTypeConstructorStub(parent: StubElement<*>?, name: String?) :
 	ScillaNamedStub<ScillaLibraryTypeConstructor>(parent, ScillaElementType.LIBRARY_TYPE_CONSTRUCTOR, name)
 
-interface ScillaTypeConstructorElement : ScillaNamedElement
+interface ScillaTypeConstructorElement : ScillaNamedElement, ScillaTypeOwner
 
 class ScillaLibraryTypeConstructor : ScillaNamedStubElement<ScillaLibraryTypeConstructorStub, ScillaLibraryTypeConstructor>,
 	ScillaTypeConstructorElement {
 	constructor(node: ASTNode) : super(node)
 	constructor(stub: ScillaLibraryTypeConstructorStub) : super(stub)
+	
+	val params: List<ScillaTypeElement> get() = findChildrenByType(ScillaElementType.TYPES)
+	
+	override fun calculateOwnType(): ScillaType {
+		return (parent as? ScillaLibraryType)?.ownType ?: ScillaUnknownType
+	}
 }
 
 class ScillaVersion(node: ASTNode) : ScillaPsiElement(node)

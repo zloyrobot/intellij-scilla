@@ -4,101 +4,57 @@ import com.intellij.lang.ASTNode
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReferenceBase
 import com.intellij.psi.impl.light.LightElement
+import com.intellij.psi.util.CachedValueProvider
+import com.intellij.psi.util.CachedValuesManager
+import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.psi.util.parentsOfType
 
 
-interface ScillaType {
-	val typeName: String
+interface ScillaTypeElement : ScillaTypeOwner
+
+interface ScillaNamedTypeElement : ScillaTypeElement, ScillaNamedElement
+
+interface ScillaTypeVarBindingElement : ScillaNamedElement {
+	val typeVar: ScillaTypeVarType?
 }
 
-data class ScillaByStrXType(override val typeName: String) : ScillaType
+interface ScillaTypeOwner : PsiElement {
+	fun calculateOwnType(): ScillaType
 
-enum class ScillaPrimitiveType(override val typeName: String) : ScillaType {
-	Int32("Int32"),
-	Int64("Int64"),
-	Int128("Int128"),
-	Int256("Int256"),
-	Uint32("Uint32"),
-	Uint64("Uint64"),
-	Uint128("Uint128"),
-	Uint256("Uint256"),
-	StringType("String"),
-	BNum("BNum"),
-	Message("Message"),
-	Event("Event"),
-	ByStr("ByStr");
-	
-	companion object {
-		fun processBuiltinTypes(processor: (type: ScillaPrimitiveType) -> Boolean): Boolean {
-			for (type in ScillaPrimitiveType.values()) {
-				if (processor(type))
-					return true
-			}
-			return false
-		}
-		
-		fun lookupType(name: String): ScillaPrimitiveType? {
-			return ScillaPrimitiveType.values().find { it.typeName == name }
+	val ownType: ScillaType get() {
+		return CachedValuesManager.getCachedValue(this) {
+			CachedValueProvider.Result.create(this.calculateOwnType(), PsiModificationTracker.MODIFICATION_COUNT)
 		}
 	}
 }
 
-//TODO: Support type parameters
-class ScillaAlgebraicType(override val typeName: String, vararg val constructors: Constr): ScillaType {
-	
-	class Constr(val name: String, vararg val types: ScillaType) {
-	}
-	companion object {
-		private val BOOL = ScillaAlgebraicType("Bool", Constr("True"), Constr("False"))
-		private val OPTION = ScillaAlgebraicType("Option", Constr("Some"), Constr("None") )
-		private val LIST = ScillaAlgebraicType("List", Constr("Cons"), Constr("Nil") )
-		private val PAIR = ScillaAlgebraicType("Pair", Constr("Pair"))
-		private val NAT = ScillaAlgebraicType("Nat", Constr("Zero"), Constr("Succ"))
-		
-		private val TYPES = listOf(BOOL, OPTION, LIST, PAIR, PAIR, NAT)
-		
-		fun processBuiltinTypes(processor: (type: ScillaAlgebraicType) -> Boolean): Boolean {
-			for (type in TYPES) {
-				if (processor(type))
-					return true
-			}
-			return false
-		}
-
-		fun processBuiltinTypeConstructors(processor: (type: ScillaAlgebraicType, constructor: Constr) -> Boolean): Boolean {
-			for (type in TYPES) {
-				for (constructor in type.constructors)
-				if (processor(type, constructor))
-					return true
-			}
-			return false
-		}
-	}
-}
-
-class ScillaBuiltinTypeElement(private val type: ScillaType, private val element: PsiElement)
+class ScillaBuiltinTypeElement(private val _type: ScillaNamedType, private val element: PsiElement)
 	: LightElement(element.manager, ScillaLanguage), ScillaNamedElement, ScillaNamedTypeElement {
 
-	override fun getName(): String = type.typeName
+	override fun getName(): String = _type.typeName
 	override fun setName(name: String): PsiElement = throw UnsupportedOperationException()
 	override fun getNameIdentifier(): PsiElement? = null
 
 	override fun isEquivalentTo(another: PsiElement?): Boolean {
-		return another is ScillaBuiltinTypeElement && another.type == type
+		return another is ScillaBuiltinTypeElement && another._type == _type
 	}
+
+	override fun calculateOwnType(): ScillaType = _type
 
 	override fun toString(): String = javaClass.simpleName + "(" + name + ")"
 }
 
-class ScillaBuiltinTypeConstructorElement(private val type: ScillaType, private val name: String, private val element: PsiElement)
+class ScillaBuiltinTypeConstructorElement(private val _type: ScillaType, private val name: String, private val element: PsiElement)
 	: LightElement(element.manager, ScillaLanguage), ScillaNamedElement, ScillaTypeConstructorElement {
 
 	override fun getName(): String = name
 	override fun setName(name: String): PsiElement = throw UnsupportedOperationException()
 	override fun getNameIdentifier(): PsiElement? = null
+	
+	override fun calculateOwnType(): ScillaType = _type
 
 	override fun isEquivalentTo(another: PsiElement?): Boolean {
-		return another is ScillaBuiltinTypeConstructorElement && another.type == type && another.name == name
+		return another is ScillaBuiltinTypeConstructorElement && another._type == _type && another.name == name
 	}
 
 	override fun toString(): String = javaClass.simpleName + "(" + name + ")"
@@ -106,14 +62,23 @@ class ScillaBuiltinTypeConstructorElement(private val type: ScillaType, private 
 
 
 
-interface ScillaTypeVarBindingElement : ScillaNamedElement {
-}
-
-interface ScillaTypeElement : PsiElement
-interface ScillaNamedTypeElement : ScillaTypeElement, ScillaNamedElement
-
 class ScillaRefTypeElement(node: ASTNode) : ScillaPsiElement(node), ScillaTypeElement {
 	val name: ScillaName? get() = findChildByType(ScillaElementType.REFS)
+	val typeArguments: List<ScillaTypeElement> get() = findChildrenByType(ScillaElementType.TYPES)
+	
+	override fun calculateOwnType(): ScillaType {
+		val referencedTypeElement = reference?.resolve() as? ScillaTypeElement
+		val type = referencedTypeElement?.ownType ?: return ScillaUnknownType
+		
+		if (typeArguments.isEmpty())
+			return type
+		
+		if (type is ScillaPolyAlgebraicType) {
+			return ScillaPolyAlgebraicTypeApplication(type, typeArguments.map { it.ownType })
+		}
+		
+		return ScillaUnknownType
+	}
 
 	override fun getReference(): PsiReferenceBase<ScillaRefTypeElement>? {
 		val ref = name ?: return null
@@ -127,17 +92,21 @@ class ScillaRefTypeElement(node: ASTNode) : ScillaPsiElement(node), ScillaTypeEl
 				if (ScillaPrimitiveType.processBuiltinTypes { processor(ScillaBuiltinTypeElement(it, element)) })
 					return true
 				
-				if (ScillaAlgebraicType.processBuiltinTypes { processor(ScillaBuiltinTypeElement(it, element)) })
+				if (ScillaSimpleAlgebraicType.processBuiltinTypes { processor(ScillaBuiltinTypeElement(it, element)) })
 					return true
 				
 				if (name.startsWith("ByStr") && name != "ByStr") {
-					if (processor(ScillaBuiltinTypeElement(ScillaByStrXType(name), element)))
-						return true
+					try {
+						val size = name.substring(5).toInt()
+						if (processor(ScillaBuiltinTypeElement(ScillaByStrType(size), element)))
+							return true
+					} catch (_: NumberFormatException) {
+					}
 				}
 				else {
-					if (processor(ScillaBuiltinTypeElement(ScillaByStrXType("ByStr20"), element)))
+					if (processor(ScillaBuiltinTypeElement(ScillaByStrType.ByStr20, element)))
 						return true
-					if (processor(ScillaBuiltinTypeElement(ScillaByStrXType("ByStr32"), element)))
+					if (processor(ScillaBuiltinTypeElement(ScillaByStrType.ByStr32, element)))
 						return true
 				}
 
@@ -152,6 +121,11 @@ class ScillaRefTypeElement(node: ASTNode) : ScillaPsiElement(node), ScillaTypeEl
 }
 
 class ScillaTypeVarTypeElement(node: ASTNode) : ScillaNamedPsiElement(node), ScillaNamedTypeElement {
+	override fun calculateOwnType(): ScillaType {
+		val referencedTypeElement = reference?.resolve() as? ScillaTypeVarBindingElement
+		return referencedTypeElement?.typeVar ?: return ScillaTypeVarType(name)
+	}
+
 	override fun getReference(): PsiReferenceBase<ScillaTypeVarTypeElement>? {
 		val name = name
 		val token = nameIdentifier ?: return null
@@ -170,9 +144,46 @@ class ScillaTypeVarTypeElement(node: ASTNode) : ScillaNamedPsiElement(node), Sci
 
 }
 
-class ScillaMapTypeElement(node: ASTNode) : ScillaPsiElement(node), ScillaTypeElement
-class ScillaFunTypeElement(node: ASTNode) : ScillaPsiElement(node), ScillaTypeElement
-class ScillaPolyTypeElement(node: ASTNode) : ScillaNamedPsiElement(node), ScillaTypeElement, ScillaTypeVarBindingElement
-class ScillaAddressTypeElement(node: ASTNode) : ScillaPsiElement(node), ScillaTypeElement
-class ScillaAddressTypeField(node: ASTNode) : ScillaPsiElement(node), ScillaTypeElement
-class ScillaParenTypeElement(node: ASTNode) : ScillaPsiElement(node), ScillaTypeElement
+class ScillaMapTypeElement(node: ASTNode) : ScillaPsiElement(node), ScillaTypeElement {
+	override fun calculateOwnType(): ScillaType {
+		TODO("Not yet implemented")
+	}
+}
+
+class ScillaFunTypeElement(node: ASTNode) : ScillaPsiElement(node), ScillaTypeElement {
+	val paramType: ScillaTypeElement? get() = findChildByType(ScillaElementType.TYPES)
+	val resultType: ScillaTypeElement? get() {
+		return findChildrenByType<ScillaTypeElement>(ScillaElementType.TYPES).dropWhile { it == paramType }.firstOrNull()
+	}	
+		
+	override fun calculateOwnType(): ScillaType {
+		val paramType = paramType?.ownType ?: ScillaUnknownType
+		val resultType = resultType?.ownType ?: ScillaUnknownType
+		return ScillaFunType(paramType, resultType)
+	}
+}
+
+class ScillaPolyTypeElement(node: ASTNode) : ScillaNamedPsiElement(node), ScillaTypeElement, ScillaTypeVarBindingElement {
+	val body: ScillaTypeElement? get() = findChildByType(ScillaElementType.TYPES)
+
+	override val typeVar: ScillaTypeVarType get() = ScillaTypeVarType(name)
+
+	override fun calculateOwnType(): ScillaType {
+		return ScillaPolyFunType(typeVar, body?.ownType ?: ScillaUnknownType)
+	}
+}
+
+
+class ScillaParenTypeElement(node: ASTNode) : ScillaPsiElement(node), ScillaTypeElement {
+	val innerType: ScillaTypeElement? get() = findChildByType(ScillaElementType.TYPES)
+	
+	override fun calculateOwnType(): ScillaType = innerType?.ownType ?: ScillaUnknownType  
+}
+
+class ScillaAddressTypeElement(node: ASTNode) : ScillaPsiElement(node), ScillaTypeElement {
+	override fun calculateOwnType(): ScillaType {
+		TODO("Not yet implemented")
+	}
+}
+
+class ScillaAddressTypeField(node: ASTNode) : ScillaPsiElement(node)

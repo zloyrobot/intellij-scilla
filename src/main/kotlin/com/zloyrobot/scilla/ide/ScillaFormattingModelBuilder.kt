@@ -160,6 +160,8 @@ class ScillaFormattingModelBuilder : FormattingModelBuilder {
 				//Around
 				.aroundInside(ScillaTokenType.ARROW, ScillaElementType.PATTERN_MATCH_CLAUSE)
 					.spaceIf(settings.SPACE_AROUND_ARROW_IN_MATCH)
+				.aroundInside(ScillaTokenType.ARROW, ScillaElementType.EXPRESSION_PATTERN_MATCH_CLAUSE)
+				.spaceIf(settings.SPACE_AROUND_ARROW_IN_MATCH)
 				.aroundInside(ScillaTokenType.ARROW, ScillaElementType.FUN_EXPRESSIONS)
 					.spaceIf(settings.SPACE_AROUND_ARROW_IN_FUNCTION)
 				.aroundInside(ScillaTokenType.TARROW, ScillaElementType.FUN_TYPE)
@@ -281,7 +283,7 @@ class ScillaFormattingBlock(
 				val messageExpressionBlock = parent
 				messageExpressionBlock?.userDate?.getUserData(MESSAGE_FIELD_NAME_ALIGN)
 			}
-			ScillaElementType.MESSAGE_ENTRY_VALUE -> {
+			in ScillaElementType.EXPRESSIONS -> {
 				val messageExpressionBlock = parent?.parent
 				messageExpressionBlock?.userDate?.getUserData(MESSAGE_FIELD_VALUE_ALIGN)
 			}
@@ -326,7 +328,8 @@ class ScillaFormattingBlock(
 			ScillaElementType.CONTRACT_CONSTRAINT -> {
 				Indent.getNormalIndent()
 			}
-			ScillaElementType.PATTERN_MATCH_CLAUSE -> {
+			ScillaElementType.PATTERN_MATCH_CLAUSE, 
+			ScillaElementType.EXPRESSION_PATTERN_MATCH_CLAUSE -> {
 				Indent.getNormalIndent()
 			}
 			

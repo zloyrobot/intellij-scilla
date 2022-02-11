@@ -23,6 +23,8 @@
 		<lang.psiStructureViewFactory language="Scilla" implementationClass="com.zloyrobot.scilla.ide.ScillaStructureViewBuilderFactory"/>
 		<lang.findUsagesProvider language="Scilla" implementationClass="com.zloyrobot.scilla.ide.ScillaFindUsagesProvider"/>
 		<lang.formatter language="Scilla" implementationClass="com.zloyrobot.scilla.ide.ScillaFormattingModelBuilder"/>
+		<codeInsight.typeInfo language="Scilla" implementationClass="com.zloyrobot.scilla.ide.ScillaTypeInfoProvider"/>
+		<codeInsight.inlayProvider language="Scilla" implementationClass="com.zloyrobot.scilla.ide.ScillaTypeHintsInlayProvider"/>
 		<annotator language="Scilla" implementationClass="com.zloyrobot.scilla.ide.ScillaIdentifierHighlighter"/>
 		<codeStyleSettingsProvider implementation="com.zloyrobot.scilla.ide.ScillaCodeStyleSettingsProvider"/>
 		<langCodeStyleSettingsProvider implementation="com.zloyrobot.scilla.ide.ScillaLanguageCodeStyleSettingsProvider"/>

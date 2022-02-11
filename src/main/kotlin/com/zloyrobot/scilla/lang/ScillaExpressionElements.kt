@@ -4,12 +4,11 @@ import com.intellij.lang.ASTNode
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReferenceBase
 import com.intellij.psi.impl.light.LightElement
-import com.intellij.psi.util.collectDescendantsOfType
-import com.intellij.psi.util.parentOfTypes
+import com.intellij.psi.util.*
 
 
-class ScillaBuiltinValueElement(private val valueName: String, private val element: PsiElement) 
-	: LightElement(element.manager, ScillaLanguage), ScillaNamedElement {
+class ScillaBuiltinValueElement(private val valueName: String, private val type: ScillaType, private val element: PsiElement) 
+	: LightElement(element.manager, ScillaLanguage), ScillaNamedElement, ScillaTypeOwner {
 
 	override fun getName(): String = valueName
 	override fun setName(name: String): PsiElement = throw UnsupportedOperationException()
@@ -19,26 +18,59 @@ class ScillaBuiltinValueElement(private val valueName: String, private val eleme
 		return another is ScillaBuiltinValueElement && another.valueName == valueName
 	}
 
+	override fun calculateOwnType(): ScillaType = type
+
 	override fun toString(): String = javaClass.simpleName + "(" + name + ")"
 }
 
-interface ScillaVarBindingElement : ScillaNamedElement
+interface ScillaVarBindingElement : ScillaNamedElement, ScillaTypeOwner
 
 abstract class ScillaVarBindingPsiElement(node: ASTNode) : ScillaNamedPsiElement(node), ScillaVarBindingElement 
 
-interface ScillaExpression : PsiElement
+interface ScillaExpression : PsiElement {
+	fun calculateExpressionType(): ScillaType
 
-class ScillaLiteralExpression(node: ASTNode) : ScillaPsiElement(node), ScillaExpression
+	val expressionType: ScillaType get() {
+		return CachedValuesManager.getCachedValue(this) {
+			CachedValueProvider.Result.create(this.calculateExpressionType(), PsiModificationTracker.MODIFICATION_COUNT)
+		}
+	}
+}
+
+class ScillaLiteralExpression(node: ASTNode) : ScillaPsiElement(node), ScillaExpression {
+	override fun calculateExpressionType(): ScillaType {
+		val token = firstChild
+		val name = token.text
+		
+		return when (token.elementType) {
+			ScillaTokenType.CID -> ScillaPrimitiveType.lookupType(name) ?: ScillaUnknownType
+			ScillaTokenType.STRING -> ScillaPrimitiveType.StringType
+			ScillaTokenType.HEX -> {
+				val text = if (name.startsWith("0x"))
+					name.substring(2)
+				else 
+					throw AssertionError("Invalid hex literal")
+				
+				ScillaByStrType(text.length / 2)
+			}
+			else -> ScillaUnknownType
+		} 
+	} 
+
+}
 
 class ScillaRefExpression(node: ASTNode) : ScillaPsiElement(node), ScillaExpression {
 	val name: ScillaName? get() = findChildByType(ScillaElementType.REFS)
+
+	override fun calculateExpressionType(): ScillaType {
+		val referencedElement = reference?.resolve() as? ScillaTypeOwner
+		return referencedElement?.ownType ?: return ScillaUnknownType
+	}
 	
 	override fun getReference(): PsiReferenceBase<ScillaRefExpression>? {
 		val ref = name ?: return null
-		val name = ref.name
 		val token = ref.nameIdentifier ?: return null
 		val rangeInElement = token.textRangeInParent.shiftRight(ref.startOffsetInParent)
-		
 		
 		return object : ScillaPsiReferenceBase<ScillaRefExpression, ScillaNamedElement>(this, ref, rangeInElement) {
 			override fun processFile(processor: (it: ScillaNamedElement) -> Boolean): Boolean {
@@ -60,10 +92,16 @@ class ScillaRefExpression(node: ASTNode) : ScillaPsiElement(node), ScillaExpress
 						is ScillaVarBindingElement -> {
 							if (processor(parent)) return true
 						}
-						is ScillaPatternMatchClause -> {
+						is ScillaStatementPatternMatchClause -> {
 							val pattern = parent.pattern
 							if (pattern != null)
-								if (processElements(pattern.collectDescendantsOfType<ScillaBinderPattern>(), processor))
+								if (processElements(pattern.descendantsOfType<ScillaBinderPattern>(), processor))
+									return true
+						}
+						is ScillaExpressionPatternMatchClause -> {
+							val pattern = parent.pattern
+							if (pattern != null)
+								if (processElements(pattern.descendantsOfType<ScillaBinderPattern>(), processor))
 									return true
 						}
 						is ScillaParametersOwner -> {
@@ -71,25 +109,25 @@ class ScillaRefExpression(node: ASTNode) : ScillaPsiElement(node), ScillaExpress
 								return true
 							
 							if (parent is ScillaComponent<*, *>)  {
-								if (processor(ScillaBuiltinValueElement("_sender", parent)) 
-									|| processor(ScillaBuiltinValueElement("_amount", parent)) 
-									|| processor(ScillaBuiltinValueElement("_origin", parent)))
+								if (processor(parent._sender.value) 
+									|| processor(parent._amount.value) 
+									|| processor(parent._origin.value))
 									return true
 							}								
 							
 							if (parent is ScillaContract) {
-								if (processor(ScillaBuiltinValueElement("_this_address", parent))
-									|| processor(ScillaBuiltinValueElement("_creation_block", parent))
-									|| processor(ScillaBuiltinValueElement("_scilla_version", parent)))
+								if (processor(parent._this_address.value)
+									|| processor(parent._creation_block.value)
+									|| processor(parent._scilla_version.value))
 									return true
 							}
 						}
 						is ScillaFile -> {
-							if (processor(ScillaBuiltinValueElement("list_foldl", parent))
-								|| processor(ScillaBuiltinValueElement("list_foldr", parent))
-								|| processor(ScillaBuiltinValueElement("list_foldk", parent))
-								|| processor(ScillaBuiltinValueElement("nat_fold", parent))
-								|| processor(ScillaBuiltinValueElement("nat_foldk", parent)))
+							if (processor(parent.list_foldl.value) 
+								|| processor(parent.list_foldr.value)
+								|| processor(parent.list_foldk.value)
+								|| processor(parent.nat_fold.value)
+								|| processor(parent.nat_foldk.value))
 								return true
 							
 							if (processCurrentAndImportedLibraries(processor))
@@ -100,7 +138,8 @@ class ScillaRefExpression(node: ASTNode) : ScillaPsiElement(node), ScillaExpress
 						ScillaVarBindingPsiElement::class,
 						ScillaParametersOwner::class,
 						ScillaStatement::class,
-						ScillaPatternMatchClause::class,
+						ScillaStatementPatternMatchClause::class,
+						ScillaExpressionPatternMatchClause::class,
 						ScillaFile::class
 					)
 				}
@@ -111,19 +150,71 @@ class ScillaRefExpression(node: ASTNode) : ScillaPsiElement(node), ScillaExpress
 				return processElements(library.vars, processor)
 			}
 		}
-	}		
+	}
+}
+interface ScillaLetElement : ScillaVarBindingElement {
+	val type: ScillaTypeElement?
+	val initializer: ScillaExpression?
 }
 
-class ScillaLetExpression(node: ASTNode) : ScillaVarBindingPsiElement(node), ScillaExpression
-class ScillaMessageExpression(node: ASTNode) : ScillaPsiElement(node), ScillaExpression
-class ScillaMessageEntry(node: ASTNode) : ScillaPsiElement(node), ScillaExpression
-class ScillaMessageEntryValue(node: ASTNode) : ScillaPsiElement(node), ScillaExpression
+class ScillaLetExpression(node: ASTNode) : ScillaVarBindingPsiElement(node), ScillaExpression, ScillaLetElement {
+	override val type: ScillaTypeElement? get() = findChildByType(ScillaElementType.TYPES)
+	
+	override val initializer: ScillaExpression? get() {
+		val inToken = findChildByType<PsiElement>(ScillaTokenType.IN) ?: return findChildByType(ScillaElementType.EXPRESSIONS)
+		return inToken.siblings(forward = false).find { it is ScillaExpression } as? ScillaExpression
+	}
+	
+	val body: ScillaExpression? get() {
+		val inToken = findChildByType<PsiElement>(ScillaTokenType.IN)
+		return inToken?.siblings(forward = true)?.find { it is ScillaExpression } as? ScillaExpression
+	} 
+	
+	override fun calculateExpressionType(): ScillaType {
+		return body?.expressionType ?: ScillaUnknownType
+	}
+
+	override fun calculateOwnType(): ScillaType {
+		if (type != null)
+			return type!!.ownType
+
+		return initializer?.expressionType ?: ScillaUnknownType
+	}
+}
+
+class ScillaMessageExpression(node: ASTNode) : ScillaPsiElement(node), ScillaExpression {
+	override fun calculateExpressionType(): ScillaType = TODO("MessageType")
+}
+
+class ScillaMessageEntry(node: ASTNode) : ScillaPsiElement(node)
 
 class ScillaFunExpression(node: ASTNode) : ScillaPsiElement(node), ScillaExpression, ScillaParametersOwner {
 	override val parameterList: ScillaParameters? get() = findChildByType(ScillaElementType.PARAMETERS)
+	val body: ScillaExpression? get() = findChildByType(ScillaElementType.EXPRESSIONS)
+	
+	override fun calculateExpressionType(): ScillaType {
+		val paramElement = parameterList?.parameters?.firstOrNull()
+		val paramType = paramElement?.ownType ?: ScillaUnknownType
+		val bodyType = body?.expressionType ?: ScillaUnknownType
+		
+		return ScillaFunType(paramType, bodyType)
+	}
 }
 
-class ScillaAppExpression(node: ASTNode) : ScillaPsiElement(node), ScillaExpression
+class ScillaAppExpression(node: ASTNode) : ScillaPsiElement(node), ScillaExpression {
+	val function: ScillaRefExpression? get() = findChildByType(ScillaElementType.REF_EXPRESSION)
+	val arguments: List<ScillaRefExpression> get() = findChildrenByType<ScillaRefExpression?>(ScillaElementType.REF_EXPRESSION).dropWhile { it == function }
+	
+	override fun calculateExpressionType(): ScillaType {
+		var type = function?.expressionType 
+		for (arg in arguments) {
+			val functionType = type as? ScillaFunType ?: return ScillaUnknownType
+			type = functionType.resultType
+		}
+		return type?: ScillaUnknownType 
+	}
+
+}
 
 abstract class ScillaConstructorRefElement(node: ASTNode) : ScillaPsiElement(node) {
 	val name: ScillaName? get() = findChildByType(ScillaElementType.REFS)
@@ -136,7 +227,7 @@ abstract class ScillaConstructorRefElement(node: ASTNode) : ScillaPsiElement(nod
 		return object : ScillaPsiReferenceBase<ScillaConstructorRefElement, ScillaTypeConstructorElement>(this, ref, rangeInElement) {
 			
 			override fun processFile(processor: (it: ScillaTypeConstructorElement) -> Boolean): Boolean {
-				if (ScillaAlgebraicType.processBuiltinTypeConstructors { type, constructor -> 
+				if (ScillaSimpleAlgebraicType.processBuiltinTypeConstructors { type, constructor -> 
 					processor(ScillaBuiltinTypeConstructorElement(type, constructor.name, element)) }) 
 					return true
 				
@@ -157,25 +248,71 @@ abstract class ScillaConstructorRefElement(node: ASTNode) : ScillaPsiElement(nod
 }
 
 class ScillaConstructorExpression(node: ASTNode) : ScillaConstructorRefElement(node), ScillaExpression {
+	val typeArguments: List<ScillaTypeElement> get() = findChildrenByType(ScillaElementType.TYPES)
+	
+	override fun calculateExpressionType(): ScillaType {
+		val referencedElement = reference?.resolve() as? ScillaTypeOwner
+		val type = referencedElement?.ownType ?: return ScillaUnknownType
+
+		if (typeArguments.isEmpty())
+			return type
+		
+		if (type is ScillaPolyAlgebraicType) {
+			return ScillaPolyAlgebraicTypeApplication(type, typeArguments.map { it.ownType })
+		}
+		return ScillaUnknownType
+	}
 }
 
 class ScillaMatchExpression(node: ASTNode) : ScillaPsiElement(node), ScillaExpression, ScillaMatchElement {
 	override val matchKeyword: PsiElement get() = findChildByType(ScillaTokenType.MATCH)!!
-	override val subject: ScillaName? get() = findChildByType(ScillaElementType.REFS)
+	override val subject: ScillaExpression? get() = findChildByType(ScillaElementType.EXPRESSIONS)
 	override val withKeyword: PsiElement? get() = findChildByType(ScillaTokenType.WITH)
 	override val endKeyword: PsiElement? get() = findChildByType(ScillaTokenType.END)
+	
+	val cases: List<ScillaExpressionPatternMatchClause> get() = findChildrenByType(ScillaElementType.EXPRESSION_PATTERN_MATCH_CLAUSE)
+	
+	override fun calculateExpressionType(): ScillaType {
+		//TODO: unification of all types?
+		return cases.firstOrNull()?.body?.expressionType ?: ScillaUnknownType
+	}
 }
 
-class ScillaBuiltinExpression(node: ASTNode) : ScillaPsiElement(node), ScillaExpression
+class ScillaBuiltinExpression(node: ASTNode) : ScillaPsiElement(node), ScillaExpression {
+	override fun calculateExpressionType(): ScillaType {
+		TODO("Not yet implemented")
+	}
+}
 
 class ScillaTFunExpression(node: ASTNode) : ScillaPsiElement(node), ScillaExpression, ScillaTypeVarBindingElement {
 	override fun getNavigationElement(): PsiElement = nameIdentifier ?: this
-	override fun getName(): String? = nameIdentifier?.text.orEmpty()
+
+	override fun getName(): String = nameIdentifier?.text.orEmpty()
 	override fun setName(name: String): PsiElement = TODO("Not yet implemented")
 
-	override fun getNameIdentifier(): PsiElement? =  findChildByType(ScillaTokenType.IDENTS) 
-	
+	override fun getNameIdentifier(): PsiElement? =  findChildByType(ScillaTokenType.IDENTS)
+
+	override val typeVar: ScillaTypeVarType get() = ScillaTypeVarType(name)
+	val body: ScillaExpression? get() = findChildByType(ScillaElementType.EXPRESSIONS)
+
+	override fun calculateExpressionType(): ScillaType {
+		return ScillaPolyFunType(typeVar, body?.expressionType ?: ScillaUnknownType)
+	}
 }
 
-class ScillaTAppExpression(node: ASTNode) : ScillaPsiElement(node), ScillaExpression
+class ScillaTAppExpression(node: ASTNode) : ScillaPsiElement(node), ScillaExpression {
+	val function: ScillaRefExpression? get() = findChildByType(ScillaElementType.REF_EXPRESSION)
+	val arguments: List<ScillaTypeElement> get() = findChildrenByType(ScillaElementType.TYPES)
+	
+	override fun calculateExpressionType(): ScillaType {
+		var type = function?.expressionType
+		for (arg in arguments) {
+			val functionType = type as? ScillaPolyFunType ?: return ScillaUnknownType
+			type = ScillaTypeSubstitution(functionType.typeParameter, arg.ownType).substitute(functionType.body)
+		}
+		
+		return type?: ScillaUnknownType
+
+	}
+}
 
