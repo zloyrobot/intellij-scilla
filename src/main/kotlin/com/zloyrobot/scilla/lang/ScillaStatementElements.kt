@@ -3,7 +3,6 @@ package com.zloyrobot.scilla.lang
 import com.intellij.lang.ASTNode
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReferenceBase
-import com.intellij.psi.util.parentsOfType
 
 
 interface ScillaStatement : PsiElement
@@ -16,35 +15,56 @@ class ScillaStatementList(node: ASTNode) : ScillaPsiElement(node) {
 }
 
 class ScillaBindStatement(node: ASTNode) : ScillaVarBindingStatement(node) {
-	override fun calculateOwnType(): ScillaType {
-		TODO("Not yet implemented")
-	}
+	val initializer: ScillaExpression? get() = findChildByType(ScillaElementType.EXPRESSIONS)
+	
+	override fun calculateOwnType(): ScillaType = initializer?.expressionType ?: ScillaUnknownType
 }
 
 class ScillaLoadStatement(node: ASTNode) : ScillaVarBindingStatement(node) {
-	val address: PsiElement? get() = findChildByType(ScillaTokenType.DOT)
-	val isRemote: Boolean get() = address != null
+	val isRemote: Boolean get() = findChildByType<PsiElement>(ScillaTokenType.DOT) != null
+	val isExist: Boolean get() =  findChildByType<PsiElement>(ScillaTokenType.EXISTS) != null
+	val field: ScillaFieldRefElement? get() = findChildByType(ScillaElementType.FIELD_REF)
+	val qualifier get() = findChildrenByType<ScillaExpression>(ScillaElementType.EXPRESSIONS).find { it != field }
+	
 	override fun calculateOwnType(): ScillaType {
-		TODO("Not yet implemented")
+		if (isExist)
+			return ScillaSimpleAlgebraicType.BOOL
+		
+		return field?.expressionType ?: ScillaUnknownType
 	}
 }
 
 class ScillaMapGetStatement(node: ASTNode) : ScillaVarBindingStatement(node) {
-	val address: PsiElement? get() = findChildByType(ScillaTokenType.DOT)
-	val isRemote: Boolean get() = address != null
+	val isRemote: Boolean get() = findChildByType<PsiElement>(ScillaTokenType.DOT) != null
+	val isExist: Boolean get() =  findChildByType<PsiElement>(ScillaTokenType.EXISTS) != null
+	val field: ScillaExpression? get() = findChildByType(ScillaElementType.FIELD_REF)
+	val qualifier get() = findChildrenByType<ScillaExpression>(ScillaElementType.EXPRESSIONS).find { it != field }
+	val arguments: List<ScillaMapAccess> get() = findChildrenByType(ScillaElementType.MAP_ACCESS)
+	
 	override fun calculateOwnType(): ScillaType {
-		TODO("Not yet implemented")
-	}
-}
-class ScillaReadFromBCStatement(node: ASTNode) : ScillaVarBindingStatement(node) {
-	override fun calculateOwnType(): ScillaType {
-		TODO("Not yet implemented")
+		if (isExist)
+			return ScillaSimpleAlgebraicType.BOOL
+		
+		var mapType = field?.expressionType ?: ScillaUnknownType
+		for (argument in arguments) {
+			if (mapType is ScillaMapType) {
+				mapType = mapType.valueType
+			}
+			else return ScillaUnknownType 
+		}
+		return ScillaPolyTypeApplication(ScillaSimpleAlgebraicType.OPTION, listOf(mapType))
 	}
 }
 
+class ScillaReadFromBCStatement(node: ASTNode) : ScillaVarBindingStatement(node) {
+	override fun calculateOwnType(): ScillaType = ScillaPrimitiveType.BNUM
+}
+
 class ScillaTypeCastStatement(node: ASTNode) : ScillaVarBindingStatement(node) {
+	val type: ScillaTypeElement? get() = findChildByType(ScillaElementType.TYPES)
+	
 	override fun calculateOwnType(): ScillaType {
-		TODO("Not yet implemented")
+		return ScillaPolyTypeApplication(ScillaSimpleAlgebraicType.OPTION, listOf(type?.ownType ?: ScillaUnknownType))
 	}
 }
 

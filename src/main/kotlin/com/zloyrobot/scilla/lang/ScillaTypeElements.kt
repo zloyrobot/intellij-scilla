@@ -74,7 +74,7 @@ class ScillaRefTypeElement(node: ASTNode) : ScillaPsiElement(node), ScillaTypeEl
 			return type
 		
 		if (type is ScillaPolyAlgebraicType) {
-			return ScillaPolyAlgebraicTypeApplication(type, typeArguments.map { it.ownType })
+			return ScillaPolyTypeApplication(type, typeArguments.map { it.ownType })
 		}
 		
 		return ScillaUnknownType
@@ -104,9 +104,9 @@ class ScillaRefTypeElement(node: ASTNode) : ScillaPsiElement(node), ScillaTypeEl
 					}
 				}
 				else {
-					if (processor(ScillaBuiltinTypeElement(ScillaByStrType.ByStr20, element)))
+					if (processor(ScillaBuiltinTypeElement(ScillaByStrType.BYSTR20, element)))
 						return true
-					if (processor(ScillaBuiltinTypeElement(ScillaByStrType.ByStr32, element)))
+					if (processor(ScillaBuiltinTypeElement(ScillaByStrType.BUSTR32, element)))
 						return true
 				}
 
@@ -145,8 +145,11 @@ class ScillaTypeVarTypeElement(node: ASTNode) : ScillaNamedPsiElement(node), Sci
 }
 
 class ScillaMapTypeElement(node: ASTNode) : ScillaPsiElement(node), ScillaTypeElement {
+	val keyType: ScillaTypeElement? get() = findChildByType(ScillaElementType.TYPES)
+	val valueType: ScillaTypeElement? get() = findChildrenByType<ScillaTypeElement>(ScillaElementType.TYPES).dropWhile { it == keyType }.firstOrNull()
+	
 	override fun calculateOwnType(): ScillaType {
-		TODO("Not yet implemented")
+		return ScillaMapType(keyType?.ownType ?:ScillaUnknownType, valueType?.ownType ?: ScillaUnknownType)
 	}
 }
 
@@ -169,7 +172,7 @@ class ScillaPolyTypeElement(node: ASTNode) : ScillaNamedPsiElement(node), Scilla
 	override val typeVar: ScillaTypeVarType get() = ScillaTypeVarType(name)
 
 	override fun calculateOwnType(): ScillaType {
-		return ScillaPolyFunType(typeVar, body?.ownType ?: ScillaUnknownType)
+		return ScillaTypeFunType(typeVar, body?.ownType ?: ScillaUnknownType)
 	}
 }
 
@@ -181,9 +184,26 @@ class ScillaParenTypeElement(node: ASTNode) : ScillaPsiElement(node), ScillaType
 }
 
 class ScillaAddressTypeElement(node: ASTNode) : ScillaPsiElement(node), ScillaTypeElement {
+	val fields: List<ScillaAddressTypeField> get() = findChildrenByType(ScillaElementType.ADDRESS_TYPE_FIELD)
+	
 	override fun calculateOwnType(): ScillaType {
-		TODO("Not yet implemented")
+		val fieldWithTypes = fields.mapNotNull {
+			val nameWithType = it.nameWithType
+			if (nameWithType == null)
+				null
+			else 
+				nameWithType.name to nameWithType.ownType
+		}.toMap()
+		
+		return ScillaAddressType(fieldWithTypes, this)
 	}
 }
 
-class ScillaAddressTypeField(node: ASTNode) : ScillaPsiElement(node)
+class ScillaAddressTypeField(node: ASTNode) : ScillaPsiElement(node), ScillaField {
+	val nameWithType get() = findChildByType<ScillaIdWithType>(ScillaElementType.ID_WITH_TYPE)
+	override fun getNameIdentifier(): PsiElement? = nameWithType?.nameIdentifier
+	override fun getName(): String? = nameWithType?.name
+	override fun setName(name: String): PsiElement? = nameWithType?.setName(name)
+
+	override fun calculateOwnType(): ScillaType = nameWithType?.typeAnnotation?.ownType ?: ScillaUnknownType
+}

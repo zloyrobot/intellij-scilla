@@ -3,6 +3,7 @@ package com.zloyrobot.scilla.ide
 import com.intellij.ide.structureView.*
 import com.intellij.ide.structureView.impl.common.PsiTreeElementBase
 import com.intellij.lang.PsiStructureViewFactory
+import com.intellij.navigation.ItemPresentation
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
@@ -33,6 +34,7 @@ class ScillaStructureViewBuilder(editor: Editor?, file: ScillaFile) : TextEditor
 			is ScillaFile,
 			is ScillaLibrary,
 			is ScillaLibraryEntry<*, *>,
+			is ScillaLibraryTypeConstructor,
 			is ScillaContract,
 			is ScillaUserField,
 			is ScillaComponent<*, *> -> true
@@ -48,6 +50,18 @@ class ScillaStructureViewBuilder(editor: Editor?, file: ScillaFile) : TextEditor
 	class TreeElement(item: PsiElement) : PsiTreeElementBase<PsiElement>(item) {
 		override fun getPresentableText(): String? {
 			return (element as ScillaNavigatableElement).name
+		}
+
+		override fun getLocationString(): String? {
+			val element = element
+			if (element is ScillaLibraryType)
+				return null
+			if (element is ScillaLibraryTypeConstructor) 
+				return "of ${element.params.joinToString(" ") { it.ownType.presentationInParentsIfNeeded }}"
+			
+			val presentation = (element as? ScillaTypeOwner)?.ownType?.presentation
+			if (presentation != null) return ": $presentation"
+			return null
 		}
 
 		override fun getChildrenBase(): Collection<StructureViewTreeElement> {

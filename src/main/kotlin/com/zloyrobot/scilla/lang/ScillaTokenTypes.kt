@@ -75,6 +75,7 @@ class ScillaTokenType(@NonNls debugName: String) : IElementType(debugName, Scill
         val LITERALS = TokenSet.create(STRING, INT, HEX)
         val IDENTS = TokenSet.create(TID, SPID, CID, ID)
         val ARROWS = TokenSet.create(ARROW, TARROW)
+		val ASSIGNMENTS = TokenSet.create(EQ, ASSIGN, FETCH)
         val KEYWORDS = TokenSet.create(FORALL, BUILTIN, LIBRARY, IMPORT, LET, IN, MATCH, WITH, END, FUN,
                 TFUN, CONTRACT, TRANSITION, SEND, EVENT, FIELD, ACCEPT, EXISTS, DELETE, EMP, MAP,
                 SCILLA_VERSION, TYPE, OF, TRY, CATCH, AS, PROCEDURE, THROW)

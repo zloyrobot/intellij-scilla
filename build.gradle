@@ -19,7 +19,7 @@ sourceSets.main.java.srcDirs += 'gen'
 
 intellij {
     pluginName = 'Scilla'
-    version = '2021.3.1'
+    version = '2021.2.3'
     downloadSources = true
 }
 

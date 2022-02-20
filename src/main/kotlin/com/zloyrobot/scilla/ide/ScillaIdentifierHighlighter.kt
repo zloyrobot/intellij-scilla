@@ -39,7 +39,7 @@ class ScillaIdentifierHighlighter : Annotator {
 			is ScillaBuiltinTypeConstructorElement -> ScillaTextAttributeKeys.BUILTIN_TYPE_CONSTRUCTOR
 			is ScillaProcedure -> ScillaTextAttributeKeys.PROCEDURE_DECLARATION
 			is ScillaCallStatement -> ScillaTextAttributeKeys.PROCEDURE_CALL
-			is ScillaUserField -> ScillaTextAttributeKeys.FIELD
+			is ScillaField -> ScillaTextAttributeKeys.FIELD
 			is ScillaLibrary -> ScillaTextAttributeKeys.LIBRARY
 			is ScillaContract -> ScillaTextAttributeKeys.CONTRACT
 			else -> null

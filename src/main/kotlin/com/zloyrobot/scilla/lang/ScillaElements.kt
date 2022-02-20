@@ -127,8 +127,6 @@ class ScillaSimpleName(node: ASTNode) : ScillaName(node) {
 }
 
 
-class ScillaMapKey(node: ASTNode) : ScillaPsiElement(node)
-class ScillaMapValue(node: ASTNode) : ScillaPsiElement(node)
 class ScillaMapAccess(node: ASTNode) : ScillaPsiElement(node)
 
 class ScillaIdWithType(node: ASTNode) : ScillaNamedPsiElement(node), ScillaTypeOwner {
@@ -185,13 +183,13 @@ class ScillaContract : ScillaNamedStubElement<ScillaContractStub, ScillaContract
 
 
 	val _this_address = lazy {
-		ScillaBuiltinValueElement("_this_address", ScillaByStrType.ByStr20, this) 
+		ScillaBuiltinValueElement("_this_address", ScillaByStrType.BYSTR20, this) 
 	}
 	val _creation_block = lazy {
-		ScillaBuiltinValueElement("_creation_block", ScillaPrimitiveType.BNum, this)
+		ScillaBuiltinValueElement("_creation_block", ScillaPrimitiveType.BNUM, this)
 	}
 	val _scilla_version = lazy {
-		ScillaBuiltinValueElement("_scilla_version", ScillaPrimitiveType.Uint32, this)
+		ScillaBuiltinValueElement("_scilla_version", ScillaPrimitiveType.UINT32, this)
 	}
 }
 
@@ -225,7 +223,7 @@ abstract class ScillaComponent<S: ScillaNamedStub<P>, P: PsiElement> : ScillaCon
 		ScillaBuiltinValueElement("_origin", ScillaAddressType(), this)
 	}
 	val _amount = lazy {
-		ScillaBuiltinValueElement("_amount", ScillaPrimitiveType.Uint128, this)
+		ScillaBuiltinValueElement("_amount", ScillaPrimitiveType.UINT128, this)
 	}
 }
 

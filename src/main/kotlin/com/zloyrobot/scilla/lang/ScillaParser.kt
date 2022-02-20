@@ -242,6 +242,7 @@ class ScillaParser : PsiParser {
         private val identCapitalized = "(capitalized identifier)"
         private val identBeginningWithUnderscore = "(identifier beginning with '_')"
         private val identBeginningWithQuote = "(identifier beginning with ')"
+		private val onlyPrimitiveTypeAllowedAsMapKeyType = "Only String, IntX, UintX, ByStrX, ByStr or BNum is allowed as map key type"
 
         /**
         * ContractModule:
@@ -421,7 +422,7 @@ class ScillaParser : PsiParser {
                         ScillaTokenType.ASSIGN, ScillaTokenType.LBRACKET -> parseStoreStatement()
                         ScillaTokenType.EQ -> parseBindStatement()
                         ScillaTokenType.ID,ScillaTokenType.SPID,ScillaTokenType.CID -> parseProcedureCallStatement()
-                        else -> errorAdvance("Expected statement") //TODO: create InvalidStatement?
+                        else -> errorAdvance("statement") //TODO: create InvalidStatement?
                     }
                 }
                 ScillaTokenType.CID -> parseProcedureCallStatement()
@@ -437,7 +438,7 @@ class ScillaParser : PsiParser {
                 ScillaTokenType.THROW -> parseThrowStatement()
                 ScillaTokenType.MATCH -> parseMatchStatement()
                 ScillaTokenType.FORALL -> parseForallStatement()
-                else -> errorAdvance("Expected statement")
+                else -> errorAdvance("statement")
             }
         }
 
@@ -508,7 +509,12 @@ class ScillaParser : PsiParser {
             else if (builder.tokenType == ScillaTokenType.EXISTS) {
                 assertAdvance(ScillaTokenType.EXISTS)
                 if (isRemote) {
+					val refMark = builder.mark()
+					val nameMark = builder.mark()
                     expectAdvance(ScillaTokenType.ID, "address of contract")
+					nameMark.done(ScillaElementType.SIMPLE_REF)
+					refMark.done(ScillaElementType.REF_EXPRESSION)
+					
                     expectAdvance(ScillaTokenType.DOT, "'.'")
                 }
 				parseFieldRef()
@@ -562,7 +568,16 @@ class ScillaParser : PsiParser {
 				ScillaTokenType.TRANSITION,
 				ScillaTokenType.PROCEDURE)) {
 				
-				tryParseStatement()
+				if (!tryParseStatement()) {
+					//Error recovery
+					val errorMark = builder.mark() //TODO: add ScillaElementType.ERROR_RECOVERING
+					when (builder.tokenType) {
+						ScillaTokenType.FIELD -> parseField()
+						ScillaTokenType.LET -> parseLetExpression(false)
+						ScillaTokenType.TYPE -> parseLibraryEntry()
+					}
+					errorMark.error("Expected statement")
+				}
 			}
             statementsMark.done(ScillaElementType.STATEMENT_LIST)
         }
@@ -1035,8 +1050,17 @@ class ScillaParser : PsiParser {
             val mark = builder.mark()
             when(builder.tokenType) {
                 ScillaTokenType.TID -> {
-                    assertAdvance(ScillaTokenType.TID)
-                    mark.done(ScillaElementType.TYPE_VAR_TYPE)
+					if (builder.lookAhead(1) == ScillaTokenType.DOT) { // Error recovering
+						builder.error("Missing 'forall' keyword")
+						assertAdvance(ScillaTokenType.TID)
+						assertAdvance(ScillaTokenType.DOT)
+						parseType()
+						mark.done(ScillaElementType.POLY_TYPE)
+					}
+                    else {
+						assertAdvance(ScillaTokenType.TID)
+						mark.done(ScillaElementType.TYPE_VAR_TYPE)
+					}
                 }
                 ScillaTokenType.MAP -> {
                     assertAdvance(ScillaTokenType.MAP)
@@ -1249,16 +1273,37 @@ class ScillaParser : PsiParser {
          *   | '(' AddressType ')'
          */
         private fun parseMapKey() {
-            val mark = builder.mark()
             if (builder.tokenType == ScillaTokenType.LPAREN) {
+				val mark = builder.mark()
+				
                 assertAdvance(ScillaTokenType.LPAREN)
-                parseSCidTypeOrAddressType(allowTypeArgs = false)
+				
+				if (builder.tokenType == ScillaTokenType.HEX || builder.tokenType in ScillaTokenType.IDENTS) {
+					val typeMark = parseSCidTypeOrAddressType(allowTypeArgs = false)
+					
+					//Error recovery
+					if (builder.tokenType == ScillaTokenType.TARROW) {
+						assertAdvance(ScillaTokenType.TARROW)
+						
+						val precede = typeMark.precede()
+						parseType()
+						precede.done(ScillaElementType.FUN_TYPE)
+						val errorMark = precede.precede()
+						errorMark.error(onlyPrimitiveTypeAllowedAsMapKeyType)
+					}
+				}
+				else {
+					//Error recovery
+					val errorMark = builder.mark()
+					parseType()
+					errorMark.error(onlyPrimitiveTypeAllowedAsMapKeyType)
+				}
+				
                 expectAdvance(ScillaTokenType.RPAREN, "')'")
+				mark.done(ScillaElementType.PAREN_TYPE)
             }
             else
                 parseSCidTypeOrAddressType(allowTypeArgs = false)
-
-            mark.done(ScillaElementType.MAP_KEY)
         }
 
         /**
@@ -1278,46 +1323,51 @@ class ScillaParser : PsiParser {
          *   | '(' MapValueAllowTypeArgs ')'
          */
         private fun parseMapValue(allowTypeArgs: Boolean = false) {
-            val mark = builder.mark()
-
             when (builder.tokenType) {
                 ScillaTokenType.MAP -> {
+					val mark = builder.mark()
+					
                     assertAdvance(ScillaTokenType.MAP)
                     parseMapKey()
                     parseMapValue(allowTypeArgs = false)
+					mark.done(ScillaElementType.MAP_TYPE)
                 }
                 ScillaTokenType.LPAREN -> {
+					val mark = builder.mark()
+					
                     assertAdvance(ScillaTokenType.LPAREN)
                     parseMapValue(true)
                     expectAdvance(ScillaTokenType.RPAREN, "')'")
+					
+					mark.done(ScillaElementType.PAREN_TYPE)
                 }
                 else -> parseSCidTypeOrAddressType(allowTypeArgs)
             }
-
-            mark.done(ScillaElementType.MAP_VALUE)
         }
 
         /**
          *   | SCid MapValueArgNonEmptyList?
          *   | AddressType
          */
-        private fun parseSCidTypeOrAddressType(allowTypeArgs: Boolean) {
+        private fun parseSCidTypeOrAddressType(allowTypeArgs: Boolean): PsiBuilder.Marker {
             if (builder.tokenType == ScillaTokenType.HEX) {
-                parseSCidAndMapValueArgList(allowTypeArgs)
+                return parseSCidAndMapValueArgList(allowTypeArgs)
             }
             else if (builder.tokenType in ScillaTokenType.IDENTS && builder.lookAhead(1) == ScillaTokenType.WITH) {
                 val mark = builder.mark()
                 parseAddressType()
                 mark.done(ScillaElementType.ADDRESS_TYPE)
+				return mark
             } else {
-                parseSCidAndMapValueArgList(allowTypeArgs)
+                return parseSCidAndMapValueArgList(allowTypeArgs)
             }
         }
 
         /**
          *   | SCid MapValueArgNonEmptyList?
          */
-        private fun parseSCidAndMapValueArgList(allowTypeArgs: Boolean) {
+        private fun parseSCidAndMapValueArgList(allowTypeArgs: Boolean): PsiBuilder.Marker {
+			val mark = builder.mark()
             parseSidOrSCid(true, "type")
             if (allowTypeArgs) {
                 parseLoop("map argument", null, null, listOf(ScillaTokenType.RPAREN)) {
@@ -1325,6 +1375,8 @@ class ScillaParser : PsiParser {
                     parseMapValue(allowTypeArgs = false)
                 }
             }
+			mark.done(ScillaElementType.REF_TYPE)
+			return mark
         }
 
         /**
@@ -1433,11 +1485,11 @@ class ScillaParser : PsiParser {
          *   | SCid
          *   | '(' Pattern ')'
          */
-        private fun tryParsePattern(allowParens: Boolean): Boolean {
+        private fun tryParsePattern(argPattern: Boolean): Boolean {
             if (detectSCid()) {
                 val mark = builder.mark()
                 parseSidOrSCid(true, "ADT constructor")
-                while (tryParsePattern(true)) {
+                while (!argPattern && tryParsePattern(true)) {
                     continue
                 }
 
@@ -1459,7 +1511,7 @@ class ScillaParser : PsiParser {
                 }
                 ScillaTokenType.LPAREN -> {
                     val mark = builder.mark()
-                    if (allowParens)
+                    if (argPattern)
                         assertAdvance(ScillaTokenType.LPAREN)
                     else
                         errorAdvance("pattern without parentheses")
@@ -1625,7 +1677,8 @@ class ScillaParser : PsiParser {
                 return true
             }
             else if (  expectedTt in ScillaTokenType.IDENTS && builder.tokenType in ScillaTokenType.IDENTS
-                    || expectedTt in ScillaTokenType.ARROWS && builder.tokenType in ScillaTokenType.ARROWS) {
+                    || expectedTt in ScillaTokenType.ARROWS && builder.tokenType in ScillaTokenType.ARROWS
+					|| expectedTt in ScillaTokenType.ASSIGNMENTS && builder.tokenType in ScillaTokenType.ASSIGNMENTS) {
                 val mark = builder.mark()
                 advance()
                 mark.error("Expected $expectedName$suffix")

@@ -19,8 +19,6 @@ class ScillaElementType(@NonNls debugName: String) : IElementType(debugName, Sci
 		
 		val REFS = TokenSet.create(SIMPLE_REF, QUALIFIED_REF, HEX_QUALIFIED_REF)
 
-        val MAP_KEY = ScillaElementType("MAP_KEY")
-        val MAP_VALUE = ScillaElementType("MAP_VALUE")
         val MAP_ACCESS = ScillaElementType("MAP_ACCESS")
 
 
@@ -52,50 +50,7 @@ class ScillaElementType(@NonNls debugName: String) : IElementType(debugName, Sci
         val EXPRESSION_PATTERN_MATCH_CLAUSE = ScillaElementType("EXPRESSION_PATTERN_MATCH_CLAUSE")
 
 		val PATTERNS = TokenSet.create(WILDCARD_PATTERN, BINDER_PATTERN, CONSTRUCTOR_PATTERN, PAREN_PATTERN)
-
-        val LITERAL_EXPRESSION = ScillaElementType("LITERAL_EXPRESSION")
-        val REF_EXPRESSION = ScillaElementType("VAR_EXPRESSION")
-        val LET_EXPRESSION = ScillaElementType("LET_EXPRESSION")
-        val MESSAGE_EXPRESSION = ScillaElementType("MESSAGE_EXPRESSION")
-        val MESSAGE_ENTRY = ScillaElementType("MESSAGE_ENTRY")
-        val FUN_EXPRESSION = ScillaElementType("FUN_EXPRESSION")
-        val APP_EXPRESSION = ScillaElementType("APP_EXPRESSION")
-        val CONSTR_EXPRESSION = ScillaElementType("CONSTR_EXPRESSION")
-        val MATCH_EXPRESSION = ScillaElementType("MATCH_EXPRESSION")
-        val BUILTIN_EXPRESSION = ScillaElementType("BUILTIN_EXPRESSION")
-        val TYPE_FUN_EXPRESSION = ScillaElementType("TYPE_FUN_EXPRESSION")
-        val TYPE_APP_EXPRESSION = ScillaElementType("TYPE_APP_EXPRESSION")
 		
-		val FUN_EXPRESSIONS = TokenSet.create(FUN_EXPRESSION, TYPE_FUN_EXPRESSION) 
-		val EXPRESSIONS = TokenSet.create(LITERAL_EXPRESSION, REF_EXPRESSION, LET_EXPRESSION, MESSAGE_EXPRESSION,
-		 MESSAGE_ENTRY, FUN_EXPRESSION, APP_EXPRESSION, CONSTR_EXPRESSION, MATCH_EXPRESSION, BUILTIN_EXPRESSION,
-		 TYPE_FUN_EXPRESSION, TYPE_APP_EXPRESSION)
-
-
-        val STATEMENT_LIST = ScillaElementType("STATEMENT_LIST")
-		
-        val LOAD_STATEMENT = ScillaElementType("LOAD_STATEMENT")
-        val REMOTE_LOAD_STATEMENT = ScillaElementType("REMOTE_LOAD_STATEMENT")
-        val STORE_STATEMENT = ScillaElementType("STORE_STATEMENT")
-        val BIND_STATEMENT = ScillaElementType("BIND_STATEMENT")
-        val MAP_UPDATE_STATEMENT = ScillaElementType("MAP_UPDATE_STATEMENT")
-		val MAP_DELETE_STATEMENT = ScillaElementType("DELETE_STATEMENT")
-        val MAP_GET_STATEMENT = ScillaElementType("MAP_GET_STATEMENT")
-        val REMOTE_MAP_GET_STATEMENT = ScillaElementType("REMOTE_MAP_GET_STATEMENT")
-		val MATCH_STATEMENT = ScillaElementType("MATCH_STATEMENT")
-		val READ_FROM_BC_STATEMENT = ScillaElementType("READ_FROM_BC_STATEMENT")
-		val TYPE_CAST_STATEMENT = ScillaElementType("TYPE_CAST_STATEMENT")
-		val ACCEPT_STATEMENT = ScillaElementType("ACCEPT_STATEMENT")
-		val ITERATE_STATEMENT = ScillaElementType("ITERATE_STATEMENT")
-		val SEND_STATEMENT = ScillaElementType("SEND_STATEMENT")
-		val EVENT_STATEMENT = ScillaElementType("EVENT_STATEMENT")
-		val CALL_STATEMENT = ScillaElementType("CALL_STATEMENT")
-		val THROW_STATEMENT = ScillaElementType("THROW_STATEMENT")
-
-		val STATEMENTS = TokenSet.create(LOAD_STATEMENT, REMOTE_LOAD_STATEMENT, STORE_STATEMENT, BIND_STATEMENT,  
-			MAP_UPDATE_STATEMENT, MAP_DELETE_STATEMENT, MAP_GET_STATEMENT, REMOTE_MAP_GET_STATEMENT, MATCH_STATEMENT,
-			READ_FROM_BC_STATEMENT, TYPE_CAST_STATEMENT, ACCEPT_STATEMENT,ITERATE_STATEMENT, SEND_STATEMENT,
-			EVENT_STATEMENT, CALL_STATEMENT, THROW_STATEMENT)
 
         val CONTRACT_DEFINITION = ScillaContractStubElementType("CONTRACT_DEFINITION")
         val CONTRACT_CONSTRAINT = ScillaElementType("CONTRACT_CONSTRAINT")
@@ -118,15 +73,57 @@ class ScillaElementType(@NonNls debugName: String) : IElementType(debugName, Sci
 
         val GARBAGE_AT_THE_END_OF_FILE = ScillaElementType("GARBAGE_AT_THE_END_OF_FILE")
 
+
+		val LITERAL_EXPRESSION = ScillaElementType("LITERAL_EXPRESSION")
+		val REF_EXPRESSION = ScillaElementType("VAR_EXPRESSION")
+		val LET_EXPRESSION = ScillaElementType("LET_EXPRESSION")
+		val MESSAGE_EXPRESSION = ScillaElementType("MESSAGE_EXPRESSION")
+		val MESSAGE_ENTRY = ScillaElementType("MESSAGE_ENTRY")
+		val FUN_EXPRESSION = ScillaElementType("FUN_EXPRESSION")
+		val APP_EXPRESSION = ScillaElementType("APP_EXPRESSION")
+		val CONSTR_EXPRESSION = ScillaElementType("CONSTR_EXPRESSION")
+		val MATCH_EXPRESSION = ScillaElementType("MATCH_EXPRESSION")
+		val BUILTIN_EXPRESSION = ScillaElementType("BUILTIN_EXPRESSION")
+		val TYPE_FUN_EXPRESSION = ScillaElementType("TYPE_FUN_EXPRESSION")
+		val TYPE_APP_EXPRESSION = ScillaElementType("TYPE_APP_EXPRESSION")
+
+		val FUN_EXPRESSIONS = TokenSet.create(FUN_EXPRESSION, TYPE_FUN_EXPRESSION)
+		val EXPRESSIONS = TokenSet.create(LITERAL_EXPRESSION, REF_EXPRESSION, LET_EXPRESSION, MESSAGE_EXPRESSION,
+			MESSAGE_ENTRY, FUN_EXPRESSION, APP_EXPRESSION, CONSTR_EXPRESSION, MATCH_EXPRESSION, BUILTIN_EXPRESSION,
+			TYPE_FUN_EXPRESSION, TYPE_APP_EXPRESSION, FIELD_REF)
+
+
+		val STATEMENT_LIST = ScillaElementType("STATEMENT_LIST")
+		val LOAD_STATEMENT = ScillaElementType("LOAD_STATEMENT")
+		val REMOTE_LOAD_STATEMENT = ScillaElementType("REMOTE_LOAD_STATEMENT")
+		val STORE_STATEMENT = ScillaElementType("STORE_STATEMENT")
+		val BIND_STATEMENT = ScillaElementType("BIND_STATEMENT")
+		val MAP_UPDATE_STATEMENT = ScillaElementType("MAP_UPDATE_STATEMENT")
+		val MAP_DELETE_STATEMENT = ScillaElementType("DELETE_STATEMENT")
+		val MAP_GET_STATEMENT = ScillaElementType("MAP_GET_STATEMENT")
+		val REMOTE_MAP_GET_STATEMENT = ScillaElementType("REMOTE_MAP_GET_STATEMENT")
+		val MATCH_STATEMENT = ScillaElementType("MATCH_STATEMENT")
+		val READ_FROM_BC_STATEMENT = ScillaElementType("READ_FROM_BC_STATEMENT")
+		val TYPE_CAST_STATEMENT = ScillaElementType("TYPE_CAST_STATEMENT")
+		val ACCEPT_STATEMENT = ScillaElementType("ACCEPT_STATEMENT")
+		val ITERATE_STATEMENT = ScillaElementType("ITERATE_STATEMENT")
+		val SEND_STATEMENT = ScillaElementType("SEND_STATEMENT")
+		val EVENT_STATEMENT = ScillaElementType("EVENT_STATEMENT")
+		val CALL_STATEMENT = ScillaElementType("CALL_STATEMENT")
+		val THROW_STATEMENT = ScillaElementType("THROW_STATEMENT")
+
+		val STATEMENTS = TokenSet.create(LOAD_STATEMENT, REMOTE_LOAD_STATEMENT, STORE_STATEMENT, BIND_STATEMENT,
+			MAP_UPDATE_STATEMENT, MAP_DELETE_STATEMENT, MAP_GET_STATEMENT, REMOTE_MAP_GET_STATEMENT, MATCH_STATEMENT,
+			READ_FROM_BC_STATEMENT, TYPE_CAST_STATEMENT, ACCEPT_STATEMENT,ITERATE_STATEMENT, SEND_STATEMENT,
+			EVENT_STATEMENT, CALL_STATEMENT, THROW_STATEMENT)
+		
+		
+
         fun createElement(node: ASTNode): PsiElement {
             return when (node.elementType) {
                 SIMPLE_REF -> ScillaSimpleName(node)
                 QUALIFIED_REF -> ScillaQualifiedName(node)
                 HEX_QUALIFIED_REF -> ScillaHexQualifiedName(node)
-
-                MAP_KEY -> ScillaMapKey(node)
-                MAP_VALUE -> ScillaMapValue(node)
-                MAP_ACCESS -> ScillaMapAccess(node)
 
                 REF_TYPE -> ScillaRefTypeElement(node)
                 MAP_TYPE -> ScillaMapTypeElement(node)
@@ -172,6 +169,7 @@ class ScillaElementType(@NonNls debugName: String) : IElementType(debugName, Sci
 				MAP_DELETE_STATEMENT -> ScillaMapDeleteStatement(node)
 				MAP_GET_STATEMENT -> ScillaMapGetStatement(node)
 				REMOTE_MAP_GET_STATEMENT -> ScillaMapGetStatement(node)
+				MAP_ACCESS -> ScillaMapAccess(node)
 				MATCH_STATEMENT -> ScillaMatchStatement(node)
 				READ_FROM_BC_STATEMENT -> ScillaReadFromBCStatement(node)
 				TYPE_CAST_STATEMENT -> ScillaTypeCastStatement(node)

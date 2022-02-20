@@ -25,6 +25,8 @@ class ScillaElementDescriptionProvider : ElementDescriptionProvider {
 					is ScillaProcedure -> "procedure"
 					is ScillaTransition -> "transition"
 					is ScillaUserField -> "field"
+					is ScillaBuiltinFieldElement -> "builtin field"
+					is ScillaAddressTypeField -> "remote field"
 					is ScillaLibrary -> "library"
 					is ScillaIdWithType -> {
 						when(parent.parent) {

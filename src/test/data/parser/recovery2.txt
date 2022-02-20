@@ -34,9 +34,8 @@ FILE
                 PsiElement(ScillaTokenType.SPID)('_tag')
               PsiElement(ScillaTokenType.COLON)(':')
               PsiWhiteSpace('     ')
-              ScillaMessageEntryValue(MESSAGE_ENTRY_VALUE)
-                ScillaLiteralExpression(LITERAL_EXPRESSION)
-                  PsiElement(ScillaTokenType.STRING)('"Tag"')
+              ScillaLiteralExpression(LITERAL_EXPRESSION)
+                PsiElement(ScillaTokenType.STRING)('"Tag"')
             PsiElement(ScillaTokenType.SEMICOLON)(';')
             PsiWhiteSpace('\n\t\t')
             ScillaMessageEntry(MESSAGE_ENTRY)
@@ -44,10 +43,9 @@ FILE
                 PsiElement(ScillaTokenType.ID)('receiver')
               PsiElement(ScillaTokenType.COLON)(':')
               PsiWhiteSpace(' ')
-              ScillaMessageEntryValue(MESSAGE_ENTRY_VALUE)
-                ScillaRefExpression(VAR_EXPRESSION)
-                  ScillaSimpleName(SIMPLE_REF)
-                    PsiElement(ScillaTokenType.ID)('address')
+              ScillaRefExpression(VAR_EXPRESSION)
+                ScillaSimpleName(SIMPLE_REF)
+                  PsiElement(ScillaTokenType.ID)('address')
             PsiElement(ScillaTokenType.SEMICOLON)(';')
             PsiWhiteSpace('\n\t\t')
             ScillaMessageEntry(MESSAGE_ENTRY)
@@ -55,17 +53,20 @@ FILE
                 PsiElement(ScillaTokenType.ID)('status')
               PsiElement(ScillaTokenType.COLON)(':')
               PsiWhiteSpace('   ')
-              ScillaMessageEntryValue(MESSAGE_ENTRY_VALUE)
-                ScillaRefExpression(VAR_EXPRESSION)
-                  ScillaSimpleName(SIMPLE_REF)
-                    PsiElement(ScillaTokenType.ID)('long_status')
+              ScillaRefExpression(VAR_EXPRESSION)
+                ScillaSimpleName(SIMPLE_REF)
+                  PsiElement(ScillaTokenType.ID)('long_status')
             PsiWhiteSpace(' ')
             PsiElement(ScillaTokenType.RBRACE)('}')
         PsiErrorElement:Expected ';'
           <empty list>
+        PsiErrorElement:Expected statement
+          <empty list>
         PsiWhiteSpace('\n\t')
         PsiErrorElement:Expected statement
           PsiElement(ScillaTokenType.RBRACE)('}')
+        PsiErrorElement:Expected statement
+          <empty list>
         PsiErrorElement:Expected statement
           PsiElement(ScillaTokenType.SEMICOLON)(';')
         PsiWhiteSpace('\n\n\t')

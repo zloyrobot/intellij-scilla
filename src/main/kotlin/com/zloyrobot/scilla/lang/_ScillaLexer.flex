@@ -46,7 +46,7 @@ import static com.intellij.psi.TokenType.WHITE_SPACE;
 DEC_DIGIT = [0-9]
 DEC_INTEGER = "-"? {DEC_DIGIT}+
 HEX_DIGIT = [a-fA-F0-9]
-HEX_INTEGER = "0x" ({HEX_DIGIT})+
+HEX_INTEGER = "0x" ({HEX_DIGIT})*
 
 LINE_WS = [\ \t\f]+
 EOL = "\r"|"\n"|"\r\n"

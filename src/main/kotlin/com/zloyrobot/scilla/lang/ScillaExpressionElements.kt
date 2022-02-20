@@ -5,9 +5,10 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReferenceBase
 import com.intellij.psi.impl.light.LightElement
 import com.intellij.psi.util.*
+import com.intellij.util.containers.map2Array
 
 
-class ScillaBuiltinValueElement(private val valueName: String, private val type: ScillaType, private val element: PsiElement) 
+class ScillaBuiltinValueElement(private val valueName: String, private val type: ScillaType, element: PsiElement) 
 	: LightElement(element.manager, ScillaLanguage), ScillaNamedElement, ScillaTypeOwner {
 
 	override fun getName(): String = valueName
@@ -44,7 +45,7 @@ class ScillaLiteralExpression(node: ASTNode) : ScillaPsiElement(node), ScillaExp
 		
 		return when (token.elementType) {
 			ScillaTokenType.CID -> ScillaPrimitiveType.lookupType(name) ?: ScillaUnknownType
-			ScillaTokenType.STRING -> ScillaPrimitiveType.StringType
+			ScillaTokenType.STRING -> ScillaPrimitiveType.STRING
 			ScillaTokenType.HEX -> {
 				val text = if (name.startsWith("0x"))
 					name.substring(2)
@@ -52,6 +53,12 @@ class ScillaLiteralExpression(node: ASTNode) : ScillaPsiElement(node), ScillaExp
 					throw AssertionError("Invalid hex literal")
 				
 				ScillaByStrType(text.length / 2)
+			}
+			ScillaTokenType.EMP -> {
+				val typeArguments = findChildrenByType<ScillaTypeElement>(ScillaElementType.TYPES)
+				if (typeArguments.size == 2)
+					return ScillaMapType(typeArguments[0].ownType, typeArguments[1].ownType)
+				else ScillaUnknownType 
 			}
 			else -> ScillaUnknownType
 		} 
@@ -183,7 +190,7 @@ class ScillaLetExpression(node: ASTNode) : ScillaVarBindingPsiElement(node), Sci
 }
 
 class ScillaMessageExpression(node: ASTNode) : ScillaPsiElement(node), ScillaExpression {
-	override fun calculateExpressionType(): ScillaType = TODO("MessageType")
+	override fun calculateExpressionType(): ScillaType = ScillaPrimitiveType.MESSAGE
 }
 
 class ScillaMessageEntry(node: ASTNode) : ScillaPsiElement(node)
@@ -258,7 +265,7 @@ class ScillaConstructorExpression(node: ASTNode) : ScillaConstructorRefElement(n
 			return type
 		
 		if (type is ScillaPolyAlgebraicType) {
-			return ScillaPolyAlgebraicTypeApplication(type, typeArguments.map { it.ownType })
+			return ScillaPolyTypeApplication(type, typeArguments.map { it.ownType })
 		}
 		return ScillaUnknownType
 	}
@@ -279,8 +286,49 @@ class ScillaMatchExpression(node: ASTNode) : ScillaPsiElement(node), ScillaExpre
 }
 
 class ScillaBuiltinExpression(node: ASTNode) : ScillaPsiElement(node), ScillaExpression {
+	val builtinId: PsiElement? get() = findChildByType(ScillaTokenType.IDENTS)
+	val arguments: List<ScillaExpression> get() = findChildrenByType(ScillaElementType.EXPRESSIONS)
+	
+	override fun getName(): String? = builtinId?.text
+
 	override fun calculateExpressionType(): ScillaType {
-		TODO("Not yet implemented")
+		val referencedElement = reference?.resolve() as? ScillaBuiltinFunctionElement ?: return ScillaUnknownType
+		val argumentTypes = arguments.map { it.expressionType }.toTypedArray()
+		
+		val overload = referencedElement.function.functionSignatures.firstNotNullOfOrNull {
+			if (it.typeParams.isEmpty()) {
+				if (it.paramTypes.contentEquals(argumentTypes)) it
+				else null
+			} else if (it.paramTypes.size == argumentTypes.size) {
+				val deduction = ScillaTypeDeduction()
+				for (p in it.paramTypes.zip(argumentTypes)) {
+					deduction.deduce(p.first, p.second)
+				}
+				if (deduction.errors.isEmpty()) {
+					val returnType = deduction.substitute(it.returnType)
+					val paramTypes = it.paramTypes.map2Array { deduction.substitute(it) }
+					ScillaFunctionSignature(returnType, *paramTypes)
+				} else null
+			} else null
+		}
+		return overload?.returnType ?: ScillaUnknownType
+	}
+
+	override fun getReference(): PsiReferenceBase<ScillaBuiltinExpression>? {
+		val token = builtinId ?: return null
+		val rangeInElement = token.textRangeInParent
+
+		return object : ScillaPsiReferenceBase<ScillaBuiltinExpression, ScillaBuiltinFunctionElement>(this, null, rangeInElement) {
+			override fun processFile(processor: (it: ScillaBuiltinFunctionElement) -> Boolean): Boolean {
+				if (ScillaBuiltinFunction.processBuiltinFunctions {
+						processor(ScillaBuiltinFunctionElement(it, element)) 
+				}) 
+					return true
+				
+
+				return false
+			}
+		}
 	}
 }
 
@@ -296,7 +344,7 @@ class ScillaTFunExpression(node: ASTNode) : ScillaPsiElement(node), ScillaExpres
 	val body: ScillaExpression? get() = findChildByType(ScillaElementType.EXPRESSIONS)
 
 	override fun calculateExpressionType(): ScillaType {
-		return ScillaPolyFunType(typeVar, body?.expressionType ?: ScillaUnknownType)
+		return ScillaTypeFunType(typeVar, body?.expressionType ?: ScillaUnknownType)
 	}
 }
 
@@ -307,7 +355,7 @@ class ScillaTAppExpression(node: ASTNode) : ScillaPsiElement(node), ScillaExpres
 	override fun calculateExpressionType(): ScillaType {
 		var type = function?.expressionType
 		for (arg in arguments) {
-			val functionType = type as? ScillaPolyFunType ?: return ScillaUnknownType
+			val functionType = type as? ScillaTypeFunType ?: return ScillaUnknownType
 			type = ScillaTypeSubstitution(functionType.typeParameter, arg.ownType).substitute(functionType.body)
 		}
 		
