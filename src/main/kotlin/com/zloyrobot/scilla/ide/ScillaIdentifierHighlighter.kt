@@ -21,6 +21,8 @@ class ScillaIdentifierHighlighter : Annotator {
 		
 		val (range, element) = if (reference != null) 
 			reference.rangeInElement.shiftRight(element.startOffset) to reference.resolve()
+		else if (element is ScillaMessageEntry)
+			(element.tag?.nameIdentifier?.textRange to element)
 		else
 			(element as? ScillaNamedElement)?.nameIdentifier?.textRange to element
 		
@@ -37,11 +39,21 @@ class ScillaIdentifierHighlighter : Annotator {
 			is ScillaLibraryLet -> ScillaTextAttributeKeys.LIBRARY_LET_BINDING
 			is ScillaLibraryTypeConstructor -> ScillaTextAttributeKeys.USER_TYPE_CONSTRUCTOR
 			is ScillaBuiltinTypeConstructorElement -> ScillaTextAttributeKeys.BUILTIN_TYPE_CONSTRUCTOR
-			is ScillaProcedure -> ScillaTextAttributeKeys.PROCEDURE_DECLARATION
-			is ScillaCallStatement -> ScillaTextAttributeKeys.PROCEDURE_CALL
+			is ScillaProcedure -> ScillaTextAttributeKeys.PROCEDURE
+			is ScillaTransition -> ScillaTextAttributeKeys.TRANSITION
+			is ScillaMessageEntry -> ScillaTextAttributeKeys.MESSAGE_TAG
 			is ScillaField -> ScillaTextAttributeKeys.FIELD
 			is ScillaLibrary -> ScillaTextAttributeKeys.LIBRARY
 			is ScillaContract -> ScillaTextAttributeKeys.CONTRACT
+			is ScillaIdWithType -> {
+				when (element.parent) {
+					is ScillaContractParameters -> ScillaTextAttributeKeys.CONTRACT_PARAMETER
+					is ScillaComponentParameters -> ScillaTextAttributeKeys.COMPONENT_PARAMETER
+					is ScillaFunctionParameters ->  ScillaTextAttributeKeys.LOCAL_LET_BINDING
+					is ScillaBinderPattern ->  ScillaTextAttributeKeys.LOCAL_LET_BINDING
+					else -> null
+				}
+			}
 			else -> null
 		}
 		

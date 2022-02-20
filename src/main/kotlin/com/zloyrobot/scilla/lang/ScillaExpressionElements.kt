@@ -193,7 +193,10 @@ class ScillaMessageExpression(node: ASTNode) : ScillaPsiElement(node), ScillaExp
 	override fun calculateExpressionType(): ScillaType = ScillaPrimitiveType.MESSAGE
 }
 
-class ScillaMessageEntry(node: ASTNode) : ScillaPsiElement(node)
+class ScillaMessageEntry(node: ASTNode) : ScillaPsiElement(node) {
+	val tag: ScillaName? get() = findChildByType(ScillaElementType.REFS)
+	val initializer: ScillaExpression? get() = findChildByType(ScillaElementType.EXPRESSIONS)
+}
 
 class ScillaFunExpression(node: ASTNode) : ScillaPsiElement(node), ScillaExpression, ScillaParametersOwner {
 	override val parameterList: ScillaParameters? get() = findChildByType(ScillaElementType.PARAMETERS)

@@ -54,11 +54,14 @@ enum class ScillaTextAttributeKeys(humanName: String, fallback: TextAttributesKe
 	
 	LIBRARY("Library", DefaultLanguageHighlighterColors.IDENTIFIER),
 	CONTRACT("Contract", DefaultLanguageHighlighterColors.IDENTIFIER),
+	CONTRACT_PARAMETER("Contract", DefaultLanguageHighlighterColors.PARAMETER),
 	LIBRARY_LET_BINDING("Library Named Value", DefaultLanguageHighlighterColors.GLOBAL_VARIABLE),
 	LOCAL_LET_BINDING("Local Named Value", DefaultLanguageHighlighterColors.LOCAL_VARIABLE),
-	PROCEDURE_DECLARATION("Procedure Declaration", DefaultLanguageHighlighterColors.FUNCTION_DECLARATION),
-	PROCEDURE_CALL("Procedure Call", DefaultLanguageHighlighterColors.FUNCTION_CALL),
-	FIELD("Contract Field", DefaultLanguageHighlighterColors.INSTANCE_FIELD);
+	PROCEDURE("Contract Procedure", DefaultLanguageHighlighterColors.FUNCTION_DECLARATION),
+	TRANSITION("Contract Transition", DefaultLanguageHighlighterColors.FUNCTION_DECLARATION),
+	COMPONENT_PARAMETER("Contract Component Parameter", DefaultLanguageHighlighterColors.PARAMETER),
+	FIELD("Contract Field", DefaultLanguageHighlighterColors.INSTANCE_FIELD),
+	MESSAGE_TAG("Message Tag", DefaultLanguageHighlighterColors.METADATA);
 	
 	val key = TextAttributesKey.createTextAttributesKey("Scilla.$name", fallback)
     val descriptor = AttributesDescriptor(humanName, key)
