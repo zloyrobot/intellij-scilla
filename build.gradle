@@ -23,6 +23,11 @@ intellij {
     downloadSources = true
 }
 
+patchPluginXml {
+	sinceBuild = '212'
+	untilBuild = '222'
+}
+
 repositories {
     mavenCentral()
     maven { url "https://www.jetbrains.com/intellij-repository/releases" }

@@ -6,8 +6,7 @@
     <description><![CDATA[
       Scilla language support for IntelliJ IDEA.
     ]]></description>
-
-    <idea-version since-build="202.0.0"/>
+	
     <depends>com.intellij.modules.lang</depends>
 
     <extensions defaultExtensionNs="com.intellij">
