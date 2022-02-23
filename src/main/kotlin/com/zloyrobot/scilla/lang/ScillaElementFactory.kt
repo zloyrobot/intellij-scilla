@@ -8,6 +8,15 @@ import com.intellij.psi.util.descendantsOfType
 class ScillaElementFactory(private val project: Project) {
 	val factory = PsiFileFactory.getInstance(project)
 	
+	fun createIdent(name: String): PsiElement {
+		return if (name.startsWith("'"))
+			create<ScillaTFunExpression>("library Lib\nlet xxx = tfun $name => 0x0")!!.nameIdentifier!!
+		else if (name.first().isUpperCase())
+			create<ScillaLibrary>("library $name\nlet xxx = 0x0")!!.nameIdentifier!!
+		else
+			create<ScillaLibraryLet>("library Lib\nlet $name = 0x0")!!.nameIdentifier!! 
+	}
+	
 	fun createTypeElement(code: String): ScillaTypeElement? {
 		return create("library Lib\nlet x: $code = Int32 0")
 	}

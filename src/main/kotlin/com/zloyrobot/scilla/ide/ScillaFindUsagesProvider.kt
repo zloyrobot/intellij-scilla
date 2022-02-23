@@ -22,6 +22,7 @@ class ScillaFindUsagesProvider : FindUsagesProvider {
 			is ScillaBuiltinTypeConstructorElement,
 			is ScillaLibraryTypeConstructor,
 			is ScillaVarBindingElement,
+			is ScillaTFunExpression,
 			is ScillaProcedure, 
 			is ScillaField, 
 			is ScillaLibrary -> true

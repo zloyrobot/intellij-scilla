@@ -4,7 +4,10 @@ import com.intellij.lang.ASTNode
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReferenceBase
 import com.intellij.psi.impl.light.LightElement
+import com.intellij.psi.search.LocalSearchScope
+import com.intellij.psi.search.SearchScope
 import com.intellij.psi.stubs.StubElement
+import com.intellij.psi.util.parentOfType
 
 
 interface ScillaField : ScillaNamedElement, ScillaTypeOwner
@@ -36,6 +39,10 @@ class ScillaUserField : ScillaContractEntry<ScillaUserFieldStub, ScillaUserField
 	val type: ScillaTypeElement? get() = findChildByType(ScillaElementType.TYPES)
 
 	override fun calculateOwnType(): ScillaType = type?.ownType ?: ScillaUnknownType
+
+	override fun getUseScope(): SearchScope {
+		return LocalSearchScope(parentOfType<ScillaContract>() ?: containingFile)
+	}
 }
 
 class ScillaFieldRefElement(node: ASTNode): ScillaNamedPsiElement(node), ScillaExpression {

@@ -21,6 +21,7 @@ class ScillaElementDescriptionProvider : ElementDescriptionProvider {
 					is ScillaRefExpression -> "value"
 					is ScillaConstructorRefElement -> "type constructor"
 					is ScillaLibraryTypeConstructor -> "user type constructor"
+					is ScillaTFunExpression -> "type parameter"
 					is ScillaVarBindingElement -> "value"
 					is ScillaProcedure -> "procedure"
 					is ScillaTransition -> "transition"

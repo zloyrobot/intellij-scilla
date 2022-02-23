@@ -4,6 +4,8 @@ import com.intellij.lang.ASTNode
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReferenceBase
 import com.intellij.psi.impl.light.LightElement
+import com.intellij.psi.search.LocalSearchScope
+import com.intellij.psi.search.SearchScope
 import com.intellij.psi.util.*
 import com.intellij.util.containers.map2Array
 
@@ -26,7 +28,11 @@ class ScillaBuiltinValueElement(private val valueName: String, private val type:
 
 interface ScillaVarBindingElement : ScillaNamedElement, ScillaTypeOwner
 
-abstract class ScillaVarBindingPsiElement(node: ASTNode) : ScillaNamedPsiElement(node), ScillaVarBindingElement 
+abstract class ScillaVarBindingPsiElement(node: ASTNode) : ScillaNamedPsiElement(node), ScillaVarBindingElement {
+	override fun getUseScope(): SearchScope {
+		return LocalSearchScope(parent)
+	}
+} 
 
 interface ScillaExpression : PsiElement {
 	fun calculateExpressionType(): ScillaType
@@ -85,9 +91,6 @@ class ScillaRefExpression(node: ASTNode) : ScillaPsiElement(node), ScillaExpress
 				while (parent != null) {
 					when (parent) {
 						is ScillaStatement -> {
-							if (parent is ScillaVarBindingStatement)
-								if (processor(parent)) return true
-							
 							var left = parent.prevSibling
 							while (left != null) {
 								if (left is ScillaVarBindingStatement)
@@ -186,6 +189,10 @@ class ScillaLetExpression(node: ASTNode) : ScillaVarBindingPsiElement(node), Sci
 			return type!!.ownType
 
 		return initializer?.expressionType ?: ScillaUnknownType
+	}
+	
+	override fun getUseScope(): SearchScope {
+		return LocalSearchScope(this)
 	}
 }
 
@@ -335,19 +342,16 @@ class ScillaBuiltinExpression(node: ASTNode) : ScillaPsiElement(node), ScillaExp
 	}
 }
 
-class ScillaTFunExpression(node: ASTNode) : ScillaPsiElement(node), ScillaExpression, ScillaTypeVarBindingElement {
-	override fun getNavigationElement(): PsiElement = nameIdentifier ?: this
-
-	override fun getName(): String = nameIdentifier?.text.orEmpty()
-	override fun setName(name: String): PsiElement = TODO("Not yet implemented")
-
-	override fun getNameIdentifier(): PsiElement? =  findChildByType(ScillaTokenType.IDENTS)
-
+class ScillaTFunExpression(node: ASTNode) : ScillaNamedPsiElement(node), ScillaExpression, ScillaTypeVarBindingElement {
 	override val typeVar: ScillaTypeVarType get() = ScillaTypeVarType(name)
 	val body: ScillaExpression? get() = findChildByType(ScillaElementType.EXPRESSIONS)
 
 	override fun calculateExpressionType(): ScillaType {
 		return ScillaTypeFunType(typeVar, body?.expressionType ?: ScillaUnknownType)
+	}
+
+	override fun getUseScope(): SearchScope {
+		return LocalSearchScope(this)
 	}
 }
 

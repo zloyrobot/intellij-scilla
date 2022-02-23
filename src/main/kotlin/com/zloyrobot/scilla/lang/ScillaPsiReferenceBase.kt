@@ -32,6 +32,18 @@ abstract class ScillaPsiReferenceBase<P: ScillaPsiElement, T: ScillaNamedElement
 		return collector.toTypedArray()
 	}
 
+	override fun handleElementRename(newElementName: String): PsiElement {
+		return if (nameElement != null)
+			nameElement.setName(newElementName)
+		else {
+			val element = element
+			if (element is ScillaNamedElement)
+				element.setName(newElementName)
+			
+			else throw UnsupportedOperationException()
+		}
+	}
+
 	private fun processNameElement(processor: (it: T) -> Boolean) {
 		when (nameElement) {
 			is ScillaSimpleName -> processFile(processor)

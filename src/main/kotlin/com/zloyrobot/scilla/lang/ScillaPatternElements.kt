@@ -2,6 +2,9 @@ package com.zloyrobot.scilla.lang
 
 import com.intellij.lang.ASTNode
 import com.intellij.psi.PsiElement
+import com.intellij.psi.search.LocalSearchScope
+import com.intellij.psi.search.SearchScope
+import com.intellij.psi.util.parentOfType
 
 
 interface ScillaPattern : PsiElement {
@@ -39,4 +42,8 @@ class ScillaParenPattern(node: ASTNode) : ScillaPsiElement(node), ScillaPattern
 
 class ScillaBinderPattern(node: ASTNode) : ScillaVarBindingPsiElement(node), ScillaPattern {
 	override fun calculateOwnType(): ScillaType = calculateMatchType() ?: ScillaUnknownType
+	
+	override fun getUseScope(): SearchScope {
+		return LocalSearchScope(parentOfType<ScillaPatternMatchClause>() ?: containingFile!!)
+	}
 }

@@ -141,6 +141,7 @@ class ScillaTypeVarTypeElement(node: ASTNode) : ScillaNamedPsiElement(node), Sci
 			}
 		}
 	}
+	
 
 }
 

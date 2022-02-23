@@ -7,11 +7,14 @@ import com.intellij.lang.ASTNode
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.psi.*
 import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.psi.search.LocalSearchScope
+import com.intellij.psi.search.SearchScope
 import com.intellij.psi.stubs.IStubElementType
 import com.intellij.psi.stubs.StubBase
 import com.intellij.psi.stubs.StubElement
 import com.intellij.psi.stubs.StubIndex
 import com.intellij.psi.tree.TokenSet
+import com.intellij.psi.util.parentOfType
 
 interface ScillaNavigatableElement : NavigatablePsiElement {
 }
@@ -69,7 +72,12 @@ interface ScillaNamedElement : PsiNameIdentifierOwner
 abstract class ScillaNamedPsiElement(node: ASTNode) : ScillaPsiElement(node), ScillaNamedElement {
 	override fun getNameIdentifier(): PsiElement? = findChildByType(ScillaTokenType.IDENTS)
 	override fun getName(): String = nameIdentifier?.text.orEmpty()
-	override fun setName(name: String): PsiElement = TODO("Not yet implemented")
+	
+	override fun setName(name: String): PsiElement {
+		val newIdentifier = ScillaElementFactory(project).createIdent(name)
+		nameIdentifier!!.replace(newIdentifier)
+		return this
+	}
 
 	override fun getNavigationElement(): PsiElement = nameIdentifier ?: this
 	override fun getTextOffset() = nameIdentifier?.textOffset ?: super.getTextOffset()
@@ -88,7 +96,11 @@ abstract class ScillaNamedStubElement<S: ScillaNamedStub<P>, P: PsiElement> : Sc
 
 	override fun getNameIdentifier(): PsiElement? = findChildByType(ScillaTokenType.IDENTS)
 	override fun getName(): String = stub?.name ?: nameIdentifier?.text.orEmpty()
-	override fun setName(name: String): PsiElement = TODO("Not yet implemented")
+	override fun setName(name: String): PsiElement {
+		val newIdentifier = ScillaElementFactory(project).createIdent(name)
+		nameIdentifier!!.replace(newIdentifier)
+		return this
+	}
 }
 
 abstract class ScillaName(node: ASTNode) : ScillaNamedPsiElement(node) {
@@ -133,7 +145,13 @@ class ScillaIdWithType(node: ASTNode) : ScillaNamedPsiElement(node), ScillaTypeO
 	val typeAnnotation: ScillaTypeElement? get() = findChildByType(ScillaElementType.TYPES)
 	
 	override fun calculateOwnType(): ScillaType = typeAnnotation?.ownType ?: ScillaUnknownType
-	
+
+	override fun getUseScope(): SearchScope {
+		if (parent is ScillaAddressTypeField)
+			return super.getUseScope()
+		
+		return LocalSearchScope(parentOfType<ScillaParameters>()?.parent ?: containingFile!!)
+	}
 }
 
 interface ScillaPatternMatchClause : PsiElement {
@@ -224,6 +242,10 @@ abstract class ScillaComponent<S: ScillaNamedStub<P>, P: PsiElement> : ScillaCon
 	}
 	val _amount = lazy {
 		ScillaBuiltinValueElement("_amount", ScillaPrimitiveType.UINT128, this)
+	}
+
+	override fun getUseScope(): SearchScope {
+		return LocalSearchScope(parentOfType<ScillaContract>() ?: containingFile)
 	}
 }
 
@@ -357,7 +379,11 @@ class ScillaImport : ScillaStubElement<ScillaImportStub>, ScillaNamedElement {
 	
 	override fun getNameIdentifier(): PsiElement? = findChildByType(ScillaTokenType.IDENTS)
 	override fun getName(): String = stub?.name ?: nameIdentifier?.text.orEmpty()
-	override fun setName(name: String): PsiElement = TODO("Not yet implemented")
+	override fun setName(name: String): PsiElement {
+		val newIdentifier = ScillaElementFactory(project).createIdent(name)
+		nameIdentifier!!.replace(newIdentifier)
+		return this
+	}
 	
 	override fun getReference(): PsiReferenceBase<ScillaImport> {
 		val rangeInElement = nameIdentifier?.textRangeInParent
@@ -366,6 +392,10 @@ class ScillaImport : ScillaStubElement<ScillaImportStub>, ScillaNamedElement {
 				val scope = GlobalSearchScope.projectScope(project)
 				val key = ScillaLibraryIndex.KEY
 				return StubIndex.getElements(key, name, project, scope, ScillaLibrary::class.java).firstOrNull()
+			}
+
+			override fun handleElementRename(newElementName: String): PsiElement {
+				return element.setName(newElementName)
 			}
 		}
 	}

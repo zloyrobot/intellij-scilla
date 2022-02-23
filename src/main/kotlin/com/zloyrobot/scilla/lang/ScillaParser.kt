@@ -9,6 +9,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.FileViewProvider
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import com.intellij.psi.TokenType
 import com.intellij.psi.tree.IElementType
 import com.intellij.psi.tree.IFileElementType
 import com.intellij.psi.tree.TokenSet
@@ -1002,16 +1003,21 @@ class ScillaParser : PsiParser {
                     if (builder.tokenType == ScillaTokenType.LPAREN) {
                         parseParameterList(ScillaElementType.CONTRACT_REF_PARAMETERS)
                     }
-                    while (builder.tokenType == ScillaTokenType.FIELD) {
-                        parseAddressTypeField()
-                        if (builder.tokenType == ScillaTokenType.END)
-                            break
-
-                        expectAdvance(ScillaTokenType.COMMA, "','")
-                    }
-                    expectAdvance(ScillaTokenType.END, "'end'")
                 }
                 else builder.error("Expected 'contract' or 'end'")
+				
+				parseLoop("field", ScillaTokenType.COMMA, "','", listOf(
+						ScillaTokenType.END,
+						ScillaTokenType.RPAREN,
+						ScillaTokenType.LET,
+						ScillaTokenType.TYPE,
+						ScillaTokenType.CONTRACT,
+						ScillaTokenType.LIBRARY,
+						ScillaTokenType.TRANSITION,
+						ScillaTokenType.PROCEDURE)) {
+						parseAddressTypeField()
+				}
+				expectAdvance(ScillaTokenType.END, "'end'")
             }
             mark.done(ScillaElementType.ADDRESS_TYPE)
         }
@@ -1021,12 +1027,22 @@ class ScillaParser : PsiParser {
          *  | 'field' IdWithType
          */
         private fun parseAddressTypeField() {
-            val marker = builder.mark()
-
-            assertAdvance(ScillaTokenType.FIELD)
-            parseIdWithType("field name")
-
-            marker.done(ScillaElementType.ADDRESS_TYPE_FIELD)
+			if (builder.tokenType == ScillaTokenType.FIELD) {
+				val marker = builder.mark()
+				
+				assertAdvance(ScillaTokenType.FIELD)
+				parseIdWithType("field name")
+				
+				marker.done(ScillaElementType.ADDRESS_TYPE_FIELD)
+			}
+			else if (builder.tokenType in ScillaTokenType.IDENTS) {
+				val marker = builder.mark()
+				
+				builder.error("Expected 'field' keyword")
+				parseIdWithType("field name")
+				
+				marker.done(ScillaElementType.ADDRESS_TYPE_FIELD)
+			}
         }
 
         /**
@@ -1179,8 +1195,15 @@ class ScillaParser : PsiParser {
             val marker = builder.mark()
             assertAdvance(ScillaTokenType.TFUN)
             if (expectAdvance(ScillaTokenType.TID, "type function parameter")) {
-                expectAdvance(ScillaTokenType.ARROW, "type function arrow ('=>')")
-                parseExpression()
+                if (expectAdvance(ScillaTokenType.ARROW, "type function arrow ('=>')"))
+                	parseExpression()
+				else if (builder.tokenType == ScillaTokenType.DOT) { //error recovery
+					errorAdvance("'=>'")
+					if (builder.tokenType in ScillaTokenType.ARROWS)
+						advance()
+					
+					parseExpression()
+				}
             }
             marker.done(ScillaElementType.TYPE_FUN_EXPRESSION)
         }
@@ -1567,7 +1590,7 @@ class ScillaParser : PsiParser {
 
             if (builder.tokenType == ScillaTokenType.LBRACE) {
                 assertAdvance(ScillaTokenType.LBRACE)
-                parseLoop("type argument",null, null, listOf(ScillaTokenType.RBRACE), ) {
+                parseLoop("type argument", null, null, listOf(ScillaTokenType.RBRACE)) {
                     tryParseTypeArg()
                 }
                 expectAdvance(ScillaTokenType.RBRACE, "'}'")
@@ -1655,6 +1678,11 @@ class ScillaParser : PsiParser {
         private fun advance(): IElementType? {
             val result = builder.tokenType
             builder.advanceLexer()
+			while (builder.tokenType == TokenType.BAD_CHARACTER) {
+				val badMark = builder.mark()
+				builder.advanceLexer()
+				badMark.error("Unexpected character")
+			}
             return result
         }
 
