@@ -28,6 +28,7 @@
 		<renamePsiElementProcessor implementation="com.zloyrobot.scilla.ide.ScillaRenameTypeVarElementProcessor"/>
 		<codeInsight.typeInfo language="Scilla" implementationClass="com.zloyrobot.scilla.ide.ScillaTypeInfoProvider"/>
 		<codeInsight.inlayProvider language="Scilla" implementationClass="com.zloyrobot.scilla.ide.ScillaTypeHintsInlayProvider"/>
+		<codeInsight.parameterInfo language="Scilla" implementationClass="com.zloyrobot.scilla.ide.ScillaParameterInfoProvider"/>
 		<annotator language="Scilla" implementationClass="com.zloyrobot.scilla.ide.ScillaIdentifierHighlighter"/>
 		<codeStyleSettingsProvider implementation="com.zloyrobot.scilla.ide.ScillaCodeStyleSettingsProvider"/>
 		<langCodeStyleSettingsProvider implementation="com.zloyrobot.scilla.ide.ScillaLanguageCodeStyleSettingsProvider"/>
@@ -35,6 +36,7 @@
 		<iconProvider implementation="com.zloyrobot.scilla.ide.ScillaIconProvider" order="first" id="DartIconProvider"/>
 		<colorSettingsPage implementation="com.zloyrobot.scilla.ide.ScillaColorSettingsPage"/>
 		<elementDescriptionProvider implementation="com.zloyrobot.scilla.ide.ScillaElementDescriptionProvider"/>
+		
 		
 		
 		<gotoClassContributor implementation="com.zloyrobot.scilla.ide.ScillaGotoClassContributor"/>
