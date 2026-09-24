@@ -78,13 +78,26 @@ beforeSettings { settings ->
     }
 }
 
-allprojects {
-    buildscript {
-        repositories {
-            maven { url 'https://cache-redirector.jetbrains.com/intellij-dependencies' }
+// gradle-intellij-plugin 1.3.0 declares a dependency on the never-published
+// org.jetbrains.intellij:blockmap:2.0.16 (upstream bug, fixed in 1.3.1). Pin the
+// buildscript classpath to a version that actually exists in Maven Central.
+def pinBlockmap = { org.gradle.api.artifacts.Configuration cfg ->
+    cfg.resolutionStrategy.eachDependency { details ->
+        if (details.requested.group == 'org.jetbrains.intellij'
+                && details.requested.name == 'blockmap') {
+            details.useVersion '1.0.10'
+            details.because 'blockmap 2.0.16 was never published'
         }
     }
-    repositories {
+}
+
+beforeProject { project ->
+    project.buildscript.configurations.all { pinBlockmap(it) }
+    project.configurations.all { pinBlockmap(it) }
+    project.buildscript.repositories {
+        maven { url 'https://cache-redirector.jetbrains.com/intellij-dependencies' }
+    }
+    project.repositories {
         maven { url 'https://cache-redirector.jetbrains.com/intellij-dependencies' }
     }
 }
