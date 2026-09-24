@@ -15,7 +15,7 @@ healthcheck() {
     ./gradlew --no-daemon test buildPlugin
 
     shopt -s nullglob
-    local distributions=(build/distributions/Scilla-*.zip)
+    local distributions=(build/distributions/*.zip)
     if [ "${#distributions[@]}" -eq 0 ] || [ ! -s "${distributions[0]}" ]; then
         echo "Plugin distribution was not produced in build/distributions." >&2
         return 1
