@@ -11,7 +11,7 @@ else
 fi
 
 # Ensure JDK 21 is installed
-if ! command -v javac >/dev/null 2>&1; then
+if [ ! -d "/usr/lib/jvm/java-21-openjdk-amd64" ]; then
     echo "==> Installing OpenJDK 21..."
     sudo apt-get update -y
     sudo apt-get install -y openjdk-21-jdk
