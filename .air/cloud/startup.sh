@@ -60,6 +60,38 @@ configure_gradle() {
   log "Wrote $props"
 }
 
+# The gradle-intellij-plugin 1.3.0 pulls artifacts (org.jetbrains.intellij:blockmap,
+# jflex for grammarkit, ...) that only live in the JetBrains "intellij-dependencies"
+# repository, which the build script does not declare. Add it via a Gradle init
+# script so the repository checkout itself stays untouched.
+configure_init_script() {
+  mkdir -p "$HOME/.gradle/init.d"
+  cat > "$HOME/.gradle/init.d/jetbrains-repositories.gradle" <<'EOF'
+beforeSettings { settings ->
+    settings.pluginManagement.repositories {
+        gradlePluginPortal()
+        maven { url 'https://cache-redirector.jetbrains.com/intellij-dependencies' }
+        mavenCentral()
+    }
+    settings.buildscript.repositories {
+        maven { url 'https://cache-redirector.jetbrains.com/intellij-dependencies' }
+    }
+}
+
+allprojects {
+    buildscript {
+        repositories {
+            maven { url 'https://cache-redirector.jetbrains.com/intellij-dependencies' }
+        }
+    }
+    repositories {
+        maven { url 'https://cache-redirector.jetbrains.com/intellij-dependencies' }
+    }
+}
+EOF
+  log "Wrote $HOME/.gradle/init.d/jetbrains-repositories.gradle"
+}
+
 export_java_home() {
   export JAVA_HOME="$JDK_DIR"
   export PATH="$JDK_DIR/bin:$PATH"
@@ -114,6 +146,7 @@ healthcheck() {
 main() {
   install_jdk11
   configure_gradle
+  configure_init_script
   export_java_home
   warm_caches
   healthcheck
