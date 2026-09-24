@@ -1,6 +1,7 @@
 # Gradle and build
 .gradle
 /build/
+.intellijPlatform/
 
 # Intellij IDEA
 .idea

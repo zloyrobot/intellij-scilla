@@ -32,11 +32,11 @@ abstract class ScillaGotoContributor(private val key: StubIndexKey<String, Scill
 		return StubIndex.getElements(key, name, project, scope, ScillaNavigatableElement::class.java).toTypedArray()
 	}
 
-	override fun getQualifiedName(item: NavigationItem?): String? {
+	override fun getQualifiedName(item: NavigationItem): String? {
 		return when(item) {
 			is ScillaLibraryEntry<*, *> -> item.qualifiedName
 			is ScillaContractEntry<*, *> -> item.qualifiedName
-			else -> item?.name
+			else -> item.name
 		}
 	}
 

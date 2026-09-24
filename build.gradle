@@ -1,48 +1,59 @@
 plugins {
-    id 'org.jetbrains.kotlin.jvm' version '1.6.10'
-    id "org.jetbrains.intellij" version "1.3.0"
-    id "org.jetbrains.grammarkit" version "2021.1.3"
+    id 'org.jetbrains.kotlin.jvm' version '2.2.20'
+    id 'org.jetbrains.intellij.platform' version '2.9.0'
+    id 'org.jetbrains.grammarkit' version '2023.3.0.4'
 }
 
-
-sourceCompatibility = 1.8
-
-compileKotlin.kotlinOptions {
-	jvmTarget = 1.8
-	freeCompilerArgs = ['-Xjvm-default=compatibility']
+kotlin {
+    jvmToolchain(21)
+    compilerOptions {
+        freeCompilerArgs.add('-Xjvm-default=all')
+    }
 }
-
 
 idea.module.generatedSourceDirs += file('gen')
 
 sourceSets.main.java.srcDirs += 'gen'
 
-intellij {
-    pluginName = 'Scilla'
-    version = '2021.2.3'
-    downloadSources = true
-}
-
-patchPluginXml {
-	sinceBuild = '212'
-	untilBuild = '222'
-}
-
 repositories {
     mavenCentral()
-    maven { url "https://www.jetbrains.com/intellij-repository/releases" }
+
+    intellijPlatform {
+        defaultRepositories()
+    }
 }
 
 dependencies {
-    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.6.10"
+    intellijPlatform {
+        intellijIdeaCommunity('2024.3.5')
+        testFramework(org.jetbrains.intellij.platform.gradle.TestFrameworkType.Platform.INSTANCE)
+    }
+
     testImplementation 'junit:junit:4.13.2'
+    testRuntimeOnly 'org.opentest4j:opentest4j:1.3.0'
 }
 
+intellijPlatform {
+    pluginConfiguration {
+        name = 'Scilla'
 
-task lexer(type: org.jetbrains.grammarkit.tasks.GenerateLexer) {
-    source = "$project.projectDir/src/main/kotlin/com/zloyrobot/scilla/lang/_ScillaLexer.flex"
-    targetDir = "gen/com/zloyrobot/scilla/lexer"
-    targetClass = "ScillaLexerGenerated"
+        ideaVersion {
+            sinceBuild = '243'
+            untilBuild = provider { null }
+        }
+    }
 }
 
-tasks.compileKotlin.dependsOn lexer
+tasks.named('generateLexer', org.jetbrains.grammarkit.tasks.GenerateLexerTask) {
+    sourceFile = file("$projectDir/src/main/kotlin/com/zloyrobot/scilla/lang/_ScillaLexer.flex")
+    targetOutputDir = file("$projectDir/gen/com/zloyrobot/scilla/lexer")
+    purgeOldFiles = true
+}
+
+tasks.named('compileKotlin') {
+    dependsOn 'generateLexer'
+}
+
+tasks.named('test') {
+    useJUnit()
+}
